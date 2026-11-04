@@ -13,6 +13,7 @@ from . import VERSION
 REPOSITORY = "bootestRook/DAPDTool"
 REPO_URL = "https://github.com/" + REPOSITORY
 API_URL = "https://api.github.com/repos/" + REPOSITORY
+INDEX_URL = "https://raw.githubusercontent.com/" + REPOSITORY + "/main/updates.json"
 MAX_CONTENT_BYTES = 1024 * 1024 * 1024
 
 
@@ -50,10 +51,22 @@ def choose_releases(releases):
     return found
 
 
+def validate_index(value):
+    if not isinstance(value, dict) or set(value) != {"schema", "releases"} or value["schema"] != 1:
+        raise ValueError("更新索引格式不受支持，请联系发布者。")
+    rows = value["releases"]
+    if not isinstance(rows, list) or len(rows) > 2 or any(not isinstance(row, dict) for row in rows):
+        raise ValueError("更新索引必须仅包含当前程序与共享内容版本。")
+    found = choose_releases(rows)
+    if sum(item is not None for item in found.values()) != len(rows):
+        raise ValueError("更新索引包含重复或不完整的版本信息。")
+    return found
+
+
 class ReleaseClient:
     def __init__(self, transport=None):
         self.client = httpx.Client(timeout=30, transport=transport, follow_redirects=False,
-                                   headers={"Accept": "application/vnd.github+json", "User-Agent": "DAPDTool/" + VERSION})
+                                   headers={"Accept": "application/json", "User-Agent": "DAPDTool/" + VERSION})
 
     def __enter__(self):
         return self
@@ -62,24 +75,14 @@ class ReleaseClient:
         self.client.close()
 
     def releases(self):
-        releases = []
-        # Bounded pagination; newly published releases are returned first.
-        for page in range(1, 11):
-            response = self.client.get(API_URL + "/releases", params={"per_page": 100, "page": page})
-            if response.status_code in (403, 429):
-                raise ValueError("GitHub 暂时限制了更新检查，请稍后重试。")
-            if response.status_code == 404:
-                raise ValueError("无法访问公开更新仓库，请联系发布者。")
-            response.raise_for_status()
-            if len(response.content) > 8 * 1024 * 1024:
-                raise ValueError("更新列表过大，已停止读取。")
-            rows = response.json()
-            if not isinstance(rows, list):
-                raise ValueError("更新列表格式不正确。")
-            releases.extend(rows)
-            if len(rows) < 100:
-                return choose_releases(releases)
-        raise ValueError("发布列表过长，请联系发布者清理旧版本。")
+        # Static public file: checking does not consume GitHub REST API quotas.
+        response = self.client.get(INDEX_URL)
+        if response.status_code == 404:
+            raise ValueError("发布者尚未提供更新索引，请稍后重试。")
+        response.raise_for_status()
+        if len(response.content) > 1024 * 1024:
+            raise ValueError("更新索引过大，已停止读取。")
+        return validate_index(response.json())
 
     def download_content(self, release, destination, progress=lambda _: None):
         asset = release["asset"]

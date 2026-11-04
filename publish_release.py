@@ -1,5 +1,6 @@
 """Publisher-only CLI. Credentials stay on the publisher's machine or in GitHub Actions."""
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -12,7 +13,7 @@ import httpx
 
 from dapd_tool import VERSION
 from dapd_tool.content_packs import install_pack, validate_catalog
-from dapd_tool.updates import API_URL, MAX_CONTENT_BYTES, REPOSITORY
+from dapd_tool.updates import API_URL, MAX_CONTENT_BYTES, REPOSITORY, choose_releases, validate_index
 
 ROOT = Path(__file__).resolve().parent
 
@@ -28,6 +29,40 @@ def credential():
     if not fields.get("password"):
         raise ValueError("请先登录本机 GitHub 凭据管理器，或在发布环境中设置 GH_TOKEN。不要把凭据放进程序包。")
     return fields["password"]
+
+
+def update_index(client, release):
+    """Activate a published release after all its assets have been verified."""
+    tag = release["tag_name"]
+    if release.get("draft") or release.get("prerelease"):
+        raise ValueError("只能将正式发布的版本写入更新索引。")
+    record = {"tag_name": tag, "body": release.get("body") or "",
+              "assets": [{key: asset.get(key) for key in ("name", "size", "digest", "browser_download_url")}
+                         for asset in release["assets"]]}
+    validate_index({"schema": 1, "releases": [record]})
+    response = client.get(API_URL + "/contents/updates.json", params={"ref": "main"})
+    sha, previous = None, []
+    if response.status_code == 200:
+        current = response.json()
+        sha = current["sha"]
+        index = json.loads(base64.b64decode(current["content"]))
+        validate_index(index)
+        previous = index["releases"]
+    elif response.status_code != 404:
+        raise ValueError("读取更新索引失败，已发布版本保持原状。")
+    records = {row["tag_name"]: row for row in [*previous, record]}
+    chosen = choose_releases(list(records.values()))
+    rows = [records[item["tag"]] for item in chosen.values() if item]
+    if tag not in {row["tag_name"] for row in rows}:
+        raise ValueError("该版本低于已激活版本，不会降低更新索引。")
+    payload = {"message": "Activate update " + tag, "branch": "main",
+               "content": base64.b64encode(json.dumps({"schema": 1, "releases": rows}, ensure_ascii=False, indent=2).encode()).decode()}
+    if sha:
+        payload["sha"] = sha
+    response = client.put(API_URL + "/contents/updates.json", json=payload)
+    if response.status_code not in (200, 201):
+        raise ValueError(f"版本已发布，但更新索引未写入（HTTP {response.status_code}）。运行 publish_release.py index {tag} 重试。")
+    print("软件更新索引已激活：" + tag, flush=True)
 
 
 def publish(tag, title, notes, paths, *, latest):
@@ -56,9 +91,10 @@ def publish(tag, title, notes, paths, *, latest):
             response = client.patch(API_URL + f"/releases/{release['id']}", json={"draft": False, "make_latest": "true" if latest else "false"})
             if response.status_code != 200:
                 raise ValueError("文件已上传，发布草稿未成功转为正式版本，请在 GitHub 核对。")
+            update_index(client, response.json())
             print(response.json()["html_url"])
         except Exception:
-            print("发布未完成；请检查 GitHub Releases 中的草稿，再以新版本号重试。")
+            print("发布流程未全部完成；请按错误说明检查 GitHub Releases 或更新索引。")
             raise
 
 
@@ -68,8 +104,16 @@ def main():
     commands.add_parser("app", help="发布 build_desktop.py 生成的当前程序版本")
     content = commands.add_parser("content", help="发布软件导出的共享内容 ZIP")
     content.add_argument("package", type=Path)
+    index = commands.add_parser("index", help="激活已正式发布的程序或内容版本（手动发布或修复索引时使用）")
+    index.add_argument("tag")
     args = parser.parse_args()
-    if args.command == "app":
+    if args.command == "index":
+        with httpx.Client(headers={"Authorization": "Bearer " + credential(), "Accept": "application/vnd.github+json"}, timeout=30) as client:
+            response = client.get(API_URL + "/releases/tags/" + args.tag)
+            if response.status_code != 200:
+                raise ValueError("找不到指定的正式发布，请检查标签。")
+            update_index(client, response.json())
+    elif args.command == "app":
         folder = ROOT / "release" / "Releases"
         paths = sorted(p for p in folder.iterdir() if p.is_file() and (p.suffix in {".exe", ".nupkg", ".zip"} or p.name == "releases.win.json"))
         if not any(p.name.endswith("-Setup.exe") for p in paths) or not any(p.name.endswith("-full.nupkg") for p in paths):

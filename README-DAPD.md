@@ -65,7 +65,7 @@ API Key 使用 Windows 当前用户的 DPAPI 加密。不要把本机数据目�
 
 ## 软件内更新
 
-“更新与共享”连接公开仓库 `bootestRook/DAPDTool`。软件启动时每天自动检查一次，也可以手动“检查更新”。
+“更新与共享”读取公开仓库 `bootestRook/DAPDTool` 的 `updates.json` 更新索引，再从 GitHub Releases 下载文件。版本检查不调用 GitHub REST API，不消耗匿名 API 配额。软件启动时每天自动检查一次，也可以手动“检查更新”。
 
 - 程序更新：查看说明，点击“下载程序更新”。下载并校验完成后，点击“重启并安装更新”；当前网络操作结束前不能重启升级。
 - 共享内容：点击“同步共享内容”，下载模板、描述、图片和附件。完整校验后一次切换共享库，无需重启。
@@ -78,7 +78,7 @@ API Key 使用 Windows 当前用户的 DPAPI 加密。不要把本机数据目�
 1. 在“我的模板”编辑需要发布的个人模板，包括每个节点的描述、图片和附件。
 2. 点击“导出共享内容包”，勾选要发布的模板，填写内容版本（例如 `1.0.0`）和说明，选择输出目录。
 3. 在本项目目录使用 `.\.venv-desktop\Scripts\python.exe publish_release.py content "内容包的完整路径"` 上传。发布工具使用发布者本机 Git 凭据或环境变量 `GH_TOKEN`；客户端不保存发布凭据。
-4. 也可在 GitHub Releases 手动新建标签 `content-v1.0.0`，上传导出的 `dapd-content-1.0.0.zip`，填写说明并正式发布（不要标为草稿或预发布）。不要把内容发布标为 Latest。
+4. 也可在 GitHub Releases 手动新建标签 `content-v1.0.0`，上传导出的 `dapd-content-1.0.0.zip`，填写说明并正式发布（不要标为草稿或预发布，也不要标为 Latest）。随后运行 `publish_release.py index content-v1.0.0`，将该版本写入软件读取的更新索引；只上传 ZIP 不会通知客户端。
 5. 同事打开软件检查更新后，即可同步。
 
 每次发布使用新版本号，不覆盖已有发布。包内只有勾选的模板及其引用素材，不包含密钥、创建记录或未勾选模板。公开仓库中的包可被任何人下载。
@@ -86,7 +86,8 @@ API Key 使用 Windows 当前用户的 DPAPI 加密。不要把本机数据目�
 ## 发布者：程序新版
 
 修改代码后，递增 `dapd_tool/__init__.py` 的 VERSION，更新 RELEASE-NOTES.md，运行测试和构建脚本，再运行 `publish_release.py app`。
-脚本先创建发布草稿、上传并核对所有文件，最后转为正式发布。仅上传安装 EXE 不足以启用更新，必须同时上传构建生成的 `releases.win.json` 和 `*-full.nupkg`。
+脚本先创建发布草稿、上传并核对所有文件，再转为正式发布并更新仓库根目录的 `updates.json`。仅上传安装 EXE 不足以启用更新，必须同时上传构建生成的 `releases.win.json` 和 `*-full.nupkg`。
+若版本发布成功但索引更新失败，运行 `publish_release.py index v版本号` 重试。发布后运行 `git pull --ff-only`，取回脚本写入仓库的索引提交。GitHub 的文件缓存可能需要数分钟刷新，稍后手动检查即可。
 
 此构建没有数字签名。若 Windows 显示未知发布者，请核对文件来源和附带的 SHA256 校验值后再决定是否运行。
 

@@ -1,4 +1,5 @@
 import copy
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -13,7 +14,8 @@ from PIL import Image
 from dapd_tool.content_packs import export_pack, install_pack, load_shared, all_assets
 from dapd_tool.media import Assets
 from dapd_tool.storage import Store
-from dapd_tool.updates import ReleaseClient, REPO_URL, choose_releases, ProgramUpdater, version_tuple
+from dapd_tool.updates import ReleaseClient, REPO_URL, INDEX_URL, choose_releases, ProgramUpdater, version_tuple
+from publish_release import update_index
 
 
 def release(version, content=False, data=b'package'):
@@ -37,15 +39,37 @@ class ReleaseTests(unittest.TestCase):
         row['assets'][0]['browser_download_url'] = 'https://example.com/payload'
         with self.assertRaises(ValueError): choose_releases([row])
 
-    def test_network_api_is_anonymous_and_paginates(self):
+    def test_static_update_index_is_anonymous_and_avoids_rest_api(self):
         requests = []
         def handler(request):
             requests.append(request)
             self.assertNotIn('authorization', request.headers)
-            return httpx.Response(200, json=[{}] * 100 if request.url.params['page'] == '1' else [release('1.2.0')])
+            self.assertEqual(str(request.url), INDEX_URL)
+            return httpx.Response(200, json={'schema': 1, 'releases': [release('1.2.0')]})
         with ReleaseClient(httpx.MockTransport(handler)) as client:
             self.assertEqual(client.releases()['program']['version'], '1.2.0')
-        self.assertEqual(len(requests), 2)
+        self.assertEqual(len(requests), 1)
+
+    def test_index_rejects_duplicate_or_incomplete_versions(self):
+        for rows in [[release('1.2.0'), release('1.1.0')], [{'tag_name': 'v1.0.0'}]]:
+            with ReleaseClient(httpx.MockTransport(lambda _: httpx.Response(200, json={'schema': 1, 'releases': rows}))) as client:
+                with self.assertRaises(ValueError): client.releases()
+
+    def test_publisher_activates_program_without_losing_content(self):
+        previous = {'schema': 1, 'releases': [release('1.0.0', True)]}
+        writes = []
+        def handler(request):
+            if request.method == 'GET':
+                return httpx.Response(200, json={'sha': 'revision', 'content': base64.b64encode(json.dumps(previous).encode()).decode()})
+            payload = json.loads(request.content)
+            self.assertEqual(payload['sha'], 'revision')
+            writes.append(json.loads(base64.b64decode(payload['content'])))
+            return httpx.Response(200, json={})
+        with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+            update_index(client, release('1.2.0'))
+        chosen = choose_releases(writes[0]['releases'])
+        self.assertEqual(chosen['program']['version'], '1.2.0')
+        self.assertEqual(chosen['content']['version'], '1.0.0')
 
     def test_content_download_redirect_and_hash(self):
         data = b'valid-package'
