@@ -37,7 +37,7 @@ def validate_asset(asset):
 
 def validate_content(content=None):
     content = content if content is not None else empty_content()
-    if not isinstance(content, dict) or set(content) != {"parts", "attachments"}:
+    if not isinstance(content, dict) or not {"parts", "attachments"}.issubset(content) or set(content) - {"parts", "attachments", "html", "assignee"}:
         raise ValueError("任务描述结构无效。")
     result = empty_content()
     for part in content["parts"]:
@@ -48,11 +48,28 @@ def validate_content(content=None):
             if not asset["mime"].startswith("image/"):
                 raise ValueError("描述中的图片文件类型不正确。")
             result["parts"].append({"image": asset})
+        elif isinstance(part, dict) and set(part) == {"file"}:
+            asset = validate_asset(part["file"])
+            if asset["mime"].startswith("image/"):
+                raise ValueError("描述中的图片请使用图片块。")
+            result["parts"].append({"file": asset})
         else:
             raise ValueError("任务描述包含不支持的内容。")
     if sum(len(p.get("text", "")) for p in result["parts"]) > 200000:
         raise ValueError("单个任务的描述不能超过 20 万字。")
     result["attachments"] = [validate_asset(asset) for asset in content["attachments"]]
+    if "html" in content:
+        if not isinstance(content["html"], str) or len(content["html"]) > 2_000_000:
+            raise ValueError("富文本描述无效或过长。")
+        result["html"] = content["html"]
+        references = set(re.findall(r"dapd-asset:([a-f0-9]{32})", content["html"]))
+        if references - set(description_assets(result)):
+            raise ValueError("富文本引用了未包含的文件，请重新添加。")
+    if content.get("assignee"):
+        assignee = content["assignee"]
+        if not isinstance(assignee, dict) or set(assignee) != {"id", "name"} or not all(isinstance(v, str) and v.strip() for v in assignee.values()):
+            raise ValueError("默认负责人信息无效，请重新选择。")
+        result["assignee"] = copy.deepcopy(assignee)
     if len(result["attachments"]) > 100:
         raise ValueError("单个任务最多添加 100 个附件。")
     return result
@@ -125,16 +142,30 @@ def image_assets(content):
     return {p["image"]["id"]:p["image"] for p in content["parts"] if "image" in p}
 
 
+def description_assets(content):
+    return {asset["id"]: asset for part in content["parts"] for kind, asset in part.items() if kind in ("image", "file")}
+
+
 def description_html(content, urls):
+    if "html" in content:
+        value = content["html"]
+        for identifier, url in urls.items():
+            value = value.replace("dapd-asset:" + identifier, html.escape(url, quote=True))
+        if "dapd-asset:" in value:
+            raise ValueError("描述中有未上传的文件。")
+        return value
     if not content["parts"]:
         return ""
     chunks = []
     for part in content["parts"]:
         if "text" in part:
             chunks.append(html.escape(part["text"]).replace("\n", "</p><p>"))
-        else:
+        elif "image" in part:
             asset = part["image"]
             chunks.append('<img src="' + html.escape(urls[asset["id"]], quote=True) + '" alt="' + html.escape(asset["name"], quote=True) + '" />')
+        else:
+            asset = part["file"]
+            chunks.append('<a href="' + html.escape(urls[asset["id"]], quote=True) + '">' + html.escape(asset["name"]) + '</a>')
     return "<p>" + "".join(chunks) + "</p>"
 
 

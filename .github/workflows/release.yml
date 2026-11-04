@@ -34,7 +34,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Python dependency installation failed' }
           dotnet tool install vpk --version 1.2.161 --tool-path .tools
           if ($LASTEXITCODE -ne 0) { throw 'Velopack installation failed' }
-      - name: Test
+      - name: Build rich text editor
+        run: .\.venv-desktop\Scripts\python.exe -X utf8 build_editor.py
+      - name: Run regression tests
         run: .\.venv-desktop\Scripts\python.exe -X utf8 -m unittest discover -s tests -v
       - name: Build installer and update packages
         run: .\.venv-desktop\Scripts\python.exe -X utf8 build_desktop.py

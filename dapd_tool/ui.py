@@ -18,8 +18,10 @@ from dapd_api import BASE_URL, DapdClient
 from .engine import reset_absent, reset_absent_uploads, resolve_unknown, run_job, safe_error
 from .catalog import group_id_from_text, locate_group, task_id_from_text, project_id_from_text
 from .content_editor import ContentEditor
-from .media import Assets, empty_content, image_assets
-from .model import make_plan, validate_template
+from .media import Assets, empty_content, image_assets, description_assets
+from .model import make_plan, make_batch_plan, validate_template
+from .batch_editor import BatchEditor
+from .people import load_people
 
 
 STATUS = {"pending": "等待创建", "started": "正在提交", "created": "已创建", "unverified": "已提交，待回读",
@@ -336,7 +338,7 @@ class ParentDialog(QDialog):
 
 
 class TemplateDialog(QDialog):
-    def __init__(self, store, template=None, parent=None):
+    def __init__(self, store, template=None, parent=None, people=None):
         super().__init__(parent)
         self.store, self.template = store, template
         self.saved_id = None
@@ -373,6 +375,8 @@ class TemplateDialog(QDialog):
         split=QSplitter()
         split.addWidget(self.tree)
         self.editor=ContentEditor(store.directory)
+        if people:
+            self.editor.set_people(people)
         split.addWidget(self.editor)
         split.setSizes([380,650])
         layout.addWidget(split,1)
@@ -408,7 +412,14 @@ class TemplateDialog(QDialog):
 
     def node_changed(self,current,previous):
         if previous is not None and previous is self.editing_item:
-            self.flush_content()
+            try:
+                self.flush_content()
+            except ValueError as exc:
+                self.tree.blockSignals(True)
+                self.tree.setCurrentItem(previous)
+                self.tree.blockSignals(False)
+                self.error.setText(str(exc))
+                return
         self.editing_item=current
         self.editor.setEnabled(current is not None)
         if current:
@@ -486,7 +497,7 @@ class TemplateDialog(QDialog):
                 position = len(result)
                 node={"title": item.text(0), "parent": parent_index}
                 content=item.data(0,Qt.ItemDataRole.UserRole) or empty_content()
-                if content["parts"] or content["attachments"]:
+                if content["parts"] or content["attachments"] or content.get("html") or content.get("assignee"):
                     node["content"]=content
                 result.append(node)
                 walk(item, position)
@@ -608,6 +619,9 @@ class MainWindow(QMainWindow):
         from .updates_ui import UpdatesPage
         self.updates = UpdatesPage(self)
         self.tabs.addTab(self.updates, "更新与共享")
+        from .task_browser import TaskBrowser
+        self.task_browser = TaskBrowser(self)
+        self.tabs.addTab(self.task_browser, "我创建的任务")
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
@@ -692,11 +706,8 @@ class MainWindow(QMainWindow):
         row.addWidget(self.template_combo, 1)
         row.addWidget(button("管理模板", lambda: self.tabs.setCurrentIndex(1)))
         bl.addLayout(row)
-        bl.addWidget(label("主任务标题 · 每行一个", "section"))
-        self.titles = QPlainTextEdit()
-        self.titles.setPlaceholderText("粘贴任务标题列表。每个标题都会创建一套所选模板的子任务。")
-        self.titles.setAccessibleName("批量主任务标题，每行一个")
-        bl.addWidget(self.titles, 1)
+        self.batch_entries = BatchEditor(self.template_combo.currentData)
+        bl.addWidget(self.batch_entries, 1)
         self.batch_count = label("尚未选择模板。", "muted")
         bl.addWidget(self.batch_count)
         self.inputs.addWidget(batch)
@@ -709,7 +720,7 @@ class MainWindow(QMainWindow):
         self.mode.currentIndexChanged.connect(self.inputs.setCurrentIndex)
         self.project.currentIndexChanged.connect(self.project_changed)
         self.group.currentIndexChanged.connect(self.group_changed)
-        self.titles.textChanged.connect(self.update_count)
+        self.batch_entries.changed.connect(self.update_count)
         self.template_combo.currentIndexChanged.connect(self.update_count)
 
     def build_templates_tab(self):
@@ -731,6 +742,8 @@ class MainWindow(QMainWindow):
         self.copy_template_button = button("复制为个人模板", self.copy_selected_template)
         row.addWidget(self.copy_template_button)
         row.addStretch()
+        row.addWidget(button("导入模板文件", self.import_template_file))
+        row.addWidget(button("导出所选模板", self.export_template_file))
         row.addWidget(button("导出共享内容包", self.export_content_pack))
         layout.addLayout(row)
         self.template_empty = label("还没有模板。点击“新建模板”，添加你需要的任务层级。", "notice")
@@ -946,19 +959,13 @@ class MainWindow(QMainWindow):
     def preview(self):
         try:
             if self.mode.currentIndex() == 0:
-                titles, nodes, root = [self.single_title.text()], [], None
+                plan = make_plan([self.single_title.text()], [], self.destination())
             else:
-                template = self.template_combo.currentData()
-                if not template:
-                    raise ValueError("还没有选择模板，请先在“我的模板”中新建并保存。")
-                titles = [line.strip() for line in self.titles.toPlainText().splitlines() if line.strip()]
-                nodes = template["nodes"]
-                root = template["root"]
-            plan = make_plan(titles, nodes, self.destination(),root)
+                plan = make_batch_plan(self.batch_entries.entries(), self.destination())
             assets=Assets(self.store.directory)
             for node in plan["nodes"]:
                 content=node["content"]
-                for asset in [*image_assets(content).values(),*content["attachments"]]:assets.path(asset,verify_hash=True)
+                for asset in [*description_assets(content).values(),*content["attachments"]]:assets.path(asset,verify_hash=True)
         except ValueError as exc:
             message(self, str(exc))
             return
@@ -966,9 +973,13 @@ class MainWindow(QMainWindow):
             self.start_job(self.store.add_job(plan))
 
     def update_count(self):
-        template = self.template_combo.currentData()
-        count = len([line for line in self.titles.toPlainText().splitlines() if line.strip()])
-        self.batch_count.setText(f"{count} 个主任务 × 每套 {len(template['nodes']) + 1} 个任务，共 {count * (len(template['nodes']) + 1)} 个。" if template else "模板库为空时，请先新建模板。")
+        count = self.batch_entries.table.rowCount()
+        total = 0
+        for row in range(count):
+            combo = self.batch_entries.table.cellWidget(row, 1)
+            template = combo.currentData() if combo else None
+            total += len(template["nodes"]) + 1 if template else 0
+        self.batch_count.setText(f"{count} 个主任务 · 共 {total} 个任务节点。每行可选择不同模板。")
 
     def refresh_templates(self, selected=None):
         previous = selected or (self.template_combo.currentData() or {}).get("id")
@@ -992,6 +1003,7 @@ class MainWindow(QMainWindow):
                 self.template_combo.setCurrentIndex(self.template_combo.count() - 1)
                 self.template_list.setCurrentItem(item)
         self.template_combo.blockSignals(False)
+        self.batch_entries.set_templates(templates)
         self.template_empty.setVisible(not templates)
         self.template_selected()
         self.update_count()
@@ -1010,10 +1022,38 @@ class MainWindow(QMainWindow):
             fill_plan(self.template_tree, {"nodes": nodes})
 
     def edit_template(self, template=None):
-        dialog = TemplateDialog(self.store, template, self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.refresh_templates(dialog.saved_id)
-            self.status.setText("模板已保存。")
+        def opened(people):
+            dialog = TemplateDialog(self.store, template, self, people)
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                self.refresh_templates(dialog.saved_id)
+                self.status.setText("模板已保存。")
+        if self.key:
+            self.status.setText("正在读取可选负责人…")
+            project = self.project.currentData()
+            self.runner.start(lambda _: with_api(self.key, lambda api: load_people(api, project)), opened, lambda error: message(self, error))
+        else:
+            opened(None)
+
+    def import_template_file(self):
+        from .template_files import import_templates
+        path, _ = QFileDialog.getOpenFileName(self, "导入模板", "", "DAPD 模板 (*.dapd-template)")
+        if path:
+            self.runner.start(lambda _: import_templates(self.store, path), self.templates_imported, lambda error: message(self, error))
+
+    def templates_imported(self, identifiers):
+        self.refresh_templates(identifiers[-1] if identifiers else None)
+        self.status.setText(f"已导入 {len(identifiers)} 个个人模板，同名模板会另存副本。")
+
+    def export_template_file(self):
+        from .template_files import export_templates
+        item = self.template_list.currentItem()
+        if not item:
+            message(self, "请先选择要导出的模板。")
+            return
+        template = item.data(Qt.ItemDataRole.UserRole)
+        path, _ = QFileDialog.getSaveFileName(self, "导出模板（包含图片和附件）", "模板.dapd-template", "DAPD 模板 (*.dapd-template)")
+        if path:
+            self.runner.start(lambda _: export_templates(self.store, [template], path), lambda _: self.status.setText("模板已导出：" + path), lambda error: message(self, error))
 
     def edit_selected_template(self):
         item = self.template_list.currentItem()

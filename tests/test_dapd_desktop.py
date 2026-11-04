@@ -10,7 +10,7 @@ import httpx
 
 from dapd_api import DapdClient, DapdError
 from dapd_tool.engine import reset_absent, resolve_unknown, run_job
-from dapd_tool.model import make_plan, node_payload, validate_template
+from dapd_tool.model import creation_order, make_plan, node_payload, validate_template
 from dapd_tool.storage import Store
 from dapd_tool.catalog import group_id_from_text, locate_group, task_id_from_text
 
@@ -25,6 +25,7 @@ class DesktopEngineTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.store = Store(self.temp.name)
         self.tasks = {}
+        self.siblings = {}
         self.api = Mock()
         self.api.validate_task.side_effect = lambda p: p
         self.api.create.side_effect = self.create
@@ -33,6 +34,8 @@ class DesktopEngineTests(unittest.TestCase):
     def create(self, payload):
         task = dict(payload, id="task-" + str(len(self.tasks)))
         self.tasks[task["id"]] = task
+        # DAPD inserts each new task at the front of its sibling list.
+        self.siblings.setdefault(task.get("parentTaskId"), []).insert(0, task["id"])
         return task
 
     def add(self, titles=("示例技能一（别名一）", "示例技能二（别名二）"), tree=TREE):
@@ -40,6 +43,13 @@ class DesktopEngineTests(unittest.TestCase):
 
     def run_job(self, identifier, stop=None, progress=lambda _: None):
         return run_job(self.store, self.api, identifier, stop or threading.Event(), progress)
+
+    def assert_display_matches_plan(self, job):
+        expected = {}
+        for node, row in zip(job["plan"]["nodes"], job["nodes"]):
+            parent = job["plan"]["destination"].get("parentTaskId") if node["parent"] is None else job["nodes"][node["parent"]]["task_id"]
+            expected.setdefault(parent, []).append(row["task_id"])
+        self.assertEqual(self.siblings, expected)
 
     def test_empty_library_and_user_templates_survive_restart(self):
         self.assertEqual(self.store.templates(), [])
@@ -65,11 +75,48 @@ class DesktopEngineTests(unittest.TestCase):
         self.assertEqual(job["status"], "completed")
         self.assertEqual(len(self.tasks), 10)
         for offset in (0, 5):
-            for child, parent in [(0, "container"), (1, f"task-{offset}"), (2, f"task-{offset+1}"), (3, f"task-{offset+2}"), (4, f"task-{offset}")]:
-                task = self.tasks[f"task-{offset+child}"]
+            for child, parent in [(0, "container"), (1, 0), (2, 1), (3, 2), (4, 0)]:
+                task = self.tasks[job["nodes"][offset + child]["task_id"]]
+                if isinstance(parent, int):
+                    parent = job["nodes"][offset + parent]["task_id"]
                 self.assertEqual(task["parentTaskId"], parent)
+                self.assertEqual(task["title"], job["plan"]["nodes"][offset + child]["title"])
                 self.assertEqual(task["taskGroupId"], "g")
                 self.assertEqual(set(task), {"id", "title", "projectId", "taskGroupId", "parentTaskId"})
+        self.assert_display_matches_plan(job)
+
+    def test_top_level_batch_matches_input_order(self):
+        destination = {"projectId": "p", "taskGroupId": "g"}
+        identifier = self.store.add_job(make_plan(["第一项", "第二项", "第三项"], [], destination))
+        job = self.run_job(identifier)
+        self.assertEqual(job["status"], "completed")
+        self.assertEqual([node["title"] for node in job["plan"]["nodes"]], ["第一项", "第二项", "第三项"])
+        self.assert_display_matches_plan(job)
+
+    def test_sibling_order_at_every_level_with_interleaved_template(self):
+        tree = [
+            {"title": "第一项", "parent": None},
+            {"title": "第二项", "parent": None},
+            {"title": "第一项的子任务甲", "parent": 0},
+            {"title": "第一项的子任务乙", "parent": 0},
+            {"title": "子任务甲的子任务一", "parent": 2},
+            {"title": "子任务甲的子任务二", "parent": 2},
+            {"title": "第二项的子任务", "parent": 1},
+            {"title": "第三项", "parent": None},
+        ]
+        job = self.run_job(self.add(tree=tree))
+        self.assertEqual(job["status"], "completed")
+        created = list(self.tasks)
+        for index, task in enumerate(self.tasks.values()):
+            parent = task.get("parentTaskId")
+            if parent != "container":
+                self.assertIn(parent, created[:index])
+        self.assert_display_matches_plan(job)
+
+    def test_deep_template_does_not_depend_on_python_recursion(self):
+        tree = [{"title": str(index), "parent": index - 1 if index else None} for index in range(1100)]
+        plan = make_plan(["主任务"], tree, DEST)
+        self.assertEqual(list(creation_order(plan)), list(range(1101)))
 
     def test_empty_task_top_level_omits_parent(self):
         plan = make_plan(["空任务"], [], {"projectId": "p", "taskGroupId": "g"})
@@ -78,23 +125,31 @@ class DesktopEngineTests(unittest.TestCase):
     def test_resume_completed_is_idempotent(self):
         identifier = self.add()
         self.run_job(identifier)
-        self.run_job(identifier)
+        job = self.run_job(identifier)
         self.assertEqual(self.api.create.call_count, 10)
+        self.assert_display_matches_plan(job)
 
     def test_cancel_and_resume_never_recreates_success(self):
         identifier = self.add()
         stop = threading.Event()
-        job = self.run_job(identifier, stop, lambda _: stop.set())
+
+        def stop_after_siblings(job):
+            if sum(row["status"] == "created" for row in job["nodes"]) == 3:
+                stop.set()
+
+        job = self.run_job(identifier, stop, stop_after_siblings)
         self.assertEqual(job["status"], "paused")
-        self.assertEqual(len(self.tasks), 1)
-        self.run_job(identifier)
+        self.assertEqual(len(self.tasks), 3)
+        self.store = Store(self.temp.name)
+        job = self.run_job(identifier)
         self.assertEqual(self.api.create.call_count, 10)
+        self.assert_display_matches_plan(job)
 
     def test_timeout_stops_and_blocks_automatic_retry(self):
         identifier = self.add()
         self.api.create.side_effect = DapdError("网络失败", uncertain=True)
         job = self.run_job(identifier)
-        self.assertEqual(job["nodes"][0]["status"], "unknown")
+        self.assertEqual(job["nodes"][5]["status"], "unknown")
         self.assertEqual(job["status"], "blocked")
         self.run_job(identifier)
         self.assertEqual(self.api.create.call_count, 1)
@@ -103,10 +158,31 @@ class DesktopEngineTests(unittest.TestCase):
         identifier = self.add()
         self.api.task.side_effect = DapdError("网络失败")
         job = self.run_job(identifier)
-        self.assertEqual(job["nodes"][0]["status"], "unverified")
+        self.assertEqual(job["nodes"][5]["status"], "unverified")
         self.api.task.side_effect = lambda identifier: self.tasks[identifier]
         self.run_job(identifier)
         self.assertEqual(self.api.create.call_count, 10)
+
+    def test_timeout_after_siblings_resolves_without_changing_order(self):
+        identifier = self.add()
+
+        def create_then_timeout(payload):
+            task = self.create(payload)
+            if len(self.tasks) == 3:
+                raise DapdError("网络失败", uncertain=True)
+            return task
+
+        self.api.create.side_effect = create_then_timeout
+        job = self.run_job(identifier)
+        self.assertEqual(job["status"], "blocked")
+        row = next(row for row in job["nodes"] if row["status"] == "unknown")
+        self.assertEqual(row["position"], 6)
+        resolve_unknown(self.store, self.api, identifier, row["position"], "task-2")
+        self.api.create.side_effect = self.create
+        job = self.run_job(identifier)
+        self.assertEqual(job["status"], "completed")
+        self.assertEqual(self.api.create.call_count, 10)
+        self.assert_display_matches_plan(job)
 
     def test_readback_mismatch_stops_children(self):
         identifier = self.add()
@@ -119,7 +195,7 @@ class DesktopEngineTests(unittest.TestCase):
         identifier = self.add()
         self.api.create.side_effect = DapdError("请求被拒绝")
         job = self.run_job(identifier)
-        self.assertEqual(job["nodes"][0]["status"], "failed")
+        self.assertEqual(job["nodes"][5]["status"], "failed")
         self.assertEqual(self.api.create.call_count, 1)
         self.api.create.side_effect = self.create
         self.run_job(identifier)

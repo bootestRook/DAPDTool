@@ -5,11 +5,12 @@ if __name__ == "__main__":
     import velopack
     velopack.App().set_auto_apply_on_startup(False).run()
 
-from PySide6.QtCore import QLockFile, QTimer
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
 from dapd_tool import VERSION
 from dapd_tool.storage import Store
+from dapd_tool.instance import acquire_instance_lock
 from dapd_tool.ui import MainWindow, configure_app, message
 
 
@@ -19,18 +20,19 @@ def main():
     app.setApplicationVersion(VERSION)
     configure_app(app)
     try:
+        lock = acquire_instance_lock()
+    except Exception:
+        message(None, "无法建立程序实例锁，请检查当前 Windows 用户的运行权限。")
+        return 1
+    if lock is None:
+        message(None, "DAPD 任务工具已在运行，请使用已经打开的窗口。")
+        return 0
+    try:
         store = Store()
-        lock = QLockFile(str(store.directory / "app.lock"))
-        lock.setStaleLockTime(0)
-        if not lock.tryLock(0):
-            if lock.error() == QLockFile.LockError.LockFailedError:
-                message(None, "DAPD 任务工具已在运行，请使用已经打开的窗口。")
-                return 0
-            message(None, "无法在本地数据目录创建锁文件。请检查当前程序的文件访问权限，或联系电脑管理员。")
-            return 1
         store.recover_interrupted()
         window = MainWindow(store)
     except Exception:
+        lock.Close()
         message(None, "无法打开本地数据目录。请检查用户目录是否可写，以及是否有其他程序占用数据文件。")
         return 1
 
@@ -41,8 +43,10 @@ def main():
     sys.excepthook = report_exception
     window.show()
     QTimer.singleShot(0, window.start)
-    result = app.exec()
-    lock.unlock()
+    try:
+        result = app.exec()
+    finally:
+        lock.Close()
     return result
 
 

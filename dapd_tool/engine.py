@@ -1,7 +1,7 @@
 """Sequential API writes, durable receipts and explicit uncertain-result recovery."""
 from dapd_api import DapdError
-from .model import node_payload
-from .media import Assets, description_html, empty_content, image_assets, upload_name
+from .model import creation_order, node_payload
+from .media import Assets, description_html, empty_content, description_assets, upload_name
 from . import media_api
 import json
 
@@ -47,6 +47,8 @@ def verify(task, payload):
             raise ValueError("DAPD 任务回读与预览不一致，请核对标题、项目、任务组和父任务。")
     if payload.get("description") and task.get("description") != payload["description"]:
         raise ValueError("DAPD 描述回读与模板内容不一致，请先核对任务。")
+    if payload.get("assigneeId") and task.get("assigneeId") != payload["assigneeId"]:
+        raise ValueError("DAPD 负责人回读与模板不一致，请先核对任务。")
 
 
 def task_for_verification(api, identifier, payload):
@@ -63,19 +65,22 @@ def run_job(store, api, identifier, stop, progress=lambda _: None):
     job = store.job(identifier)
     if job["status"] == "completed":
         return job
+    if any(row["status"] in ("unknown", "started") for row in job["nodes"]):
+        store.set_job(identifier, "blocked", "存在结果待核对的任务，请先处理后继续。")
+        return store.job(identifier)
     plan = job["plan"]
     ids = {n["position"]: n["task_id"] for n in job["nodes"] if n["status"] == "created"}
     store.set_job(identifier, "running")
     try:
-        for row in job["nodes"]:
-            index = row["position"]
+        assignees = {n.get("content", {}).get("assignee", {}).get("id") for n in plan["nodes"]} - {None}
+        if assignees and assignees - {m["id"] for m in api.members(plan["destination"]["projectId"])}:
+            raise ValueError("模板有负责人不属于目标项目，请修改模板后重新预览；本次未提交新任务。")
+        for index in creation_order(plan):
+            row = job["nodes"][index]
             if row["status"] == "created":
                 continue
             if stop.is_set():
                 store.set_job(identifier, "paused")
-                return store.job(identifier)
-            if row["status"] in ("unknown", "started"):
-                store.set_job(identifier, "blocked", "存在结果待核对的任务，请先处理后继续。")
                 return store.job(identifier)
             payload = node_payload(plan, index, ids)
             content = plan["nodes"][index].get("content",empty_content())
@@ -86,7 +91,7 @@ def run_job(store, api, identifier, stop, progress=lambda _: None):
                 # Validate the destination before uploading files into the project.
                 api.validate_task(payload)
                 urls = {}
-                for asset in image_assets(content).values():
+                for asset in description_assets(content).values():
                     result = ensure_upload(store,api,identifier,index,"description",asset,payload["projectId"],None,stop)
                     urls[asset["id"]] = result["url"]
                 description = description_html(content,urls)

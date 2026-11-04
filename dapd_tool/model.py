@@ -52,6 +52,18 @@ def make_plan(titles, nodes, destination, root=None):
     return {"destination": copy.deepcopy(destination), "nodes": plan}
 
 
+def creation_order(plan):
+    """Reverse siblings for DAPD's front insertion, keeping parents first."""
+    children = {}
+    for index, node in enumerate(plan["nodes"]):
+        children.setdefault(node["parent"], []).append(index)
+    pending = list(children.get(None, []))
+    while pending:
+        index = pending.pop()
+        yield index
+        pending.extend(children.get(index, []))
+
+
 def node_payload(plan, index, ids):
     node = plan["nodes"][index]
     dest = plan["destination"]
@@ -61,4 +73,25 @@ def node_payload(plan, index, ids):
         raise ValueError("父任务尚未创建成功，不能创建子任务。")
     if parent:
         payload["parentTaskId"] = parent
+    assignee = node.get("content", {}).get("assignee")
+    if assignee:
+        payload["assigneeId"] = assignee["id"]
     return payload
+
+
+def make_batch_plan(entries, destination):
+    """Combine independently named template instances without losing parent indices."""
+    nodes = []
+    for title, template in entries:
+        plan = make_plan([title], template["nodes"], destination, template["root"])
+        offset = len(nodes)
+        for node in plan["nodes"]:
+            if node["parent"] is not None:
+                node["parent"] += offset
+            nodes.append(node)
+    if not nodes or len(nodes) > MAX_TASKS:
+        raise ValueError(f"请添加任务，每批最多 {MAX_TASKS} 个节点。")
+    titles = [n["title"] for n in nodes if n["parent"] is None]
+    if len(titles) != len(set(titles)):
+        raise ValueError("主任务标题有重复，请分别命名。")
+    return {"destination": copy.deepcopy(destination), "nodes": nodes}

@@ -9,3 +9,4 @@ __pycache__/
 *.sqlite3
 credential.bin
 *.log
+editor/node_modules/

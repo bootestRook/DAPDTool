@@ -106,6 +106,17 @@ class MediaTests(unittest.TestCase):
         self.assertIn('<img src="https://storage.example/p.png"',html)
         self.assertNotIn(str(self.root),html)
 
+    def test_description_file_uploads_before_creation_and_replaces_local_reference(self):
+        content = {"parts": [{"file": self.file}], "attachments": [],
+                   "html": '<a href="dapd-asset:' + self.file["id"] + '">spec.txt</a>'}
+        job = self.run_job(self.job(root=content))
+        self.assertEqual(job["status"], "completed")
+        self.assertEqual(self.upload_calls, 2)
+        for task in self.tasks.values():
+            self.assertIn('href="https://storage.example/', task["description"])
+            self.assertNotIn("dapd-asset:", task["description"])
+            self.assertEqual(task["attachments"], [])
+
     def test_root_and_descendant_fixed_content_expand_independently(self):
         nodes=[{'title':'子任务','parent':None,'content':{'parts':[{'text':'子任务描述'}],'attachments':[]}}]
         job=self.run_job(self.job(nodes=nodes))
@@ -162,7 +173,8 @@ class MediaTests(unittest.TestCase):
         job=self.run_job(identifier)
         self.assertEqual(job['status'],'blocked')
         self.assertEqual(self.upload_calls,1)
-        reset_absent_uploads(self.store,identifier,0)
+        row = next(row for row in job['nodes'] if row['status'] == 'media_unknown')
+        reset_absent_uploads(self.store,identifier,row['position'])
         self.assertEqual(self.run_job(identifier)['status'],'completed')
 
     def test_copied_project_link(self):

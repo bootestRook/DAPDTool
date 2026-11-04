@@ -143,7 +143,7 @@ class ProgramUpdater:
 
     def prepare(self, release):
         if not self.installed:
-            raise ValueError("请使用首次安装包安装软件后，再使用软件内更新。")
+            raise ValueError("请解压完整便携包并运行其中的程序，再使用软件内更新。")
         self.manager = self._manager(release["base_url"])
         self.info = self.manager.check_for_updates()
         if self.info and self.info.TargetFullRelease.Version != release["version"]:

@@ -13,7 +13,7 @@ import zipfile
 from PIL import Image
 
 from . import VERSION
-from .media import Assets, MIMES, validate_content, MAX_FILE
+from .media import Assets, MIMES, validate_content, MAX_FILE, description_assets
 from .model import title_text, validate_template
 from .updates import MAX_CONTENT_BYTES, version_tuple
 
@@ -23,9 +23,7 @@ MAX_MANIFEST = 4 * 1024 * 1024
 
 def all_assets(template):
     for content in [template["root"], *[n.get("content", {"parts": [], "attachments": []}) for n in template["nodes"]]]:
-        for part in content["parts"]:
-            if "image" in part:
-                yield part["image"]
+        yield from description_assets(content).values()
         yield from content["attachments"]
 
 
@@ -162,6 +160,10 @@ def install_pack(directory, archive_path, expected_version, app_version=VERSION)
             else:
                 shutil.copyfile(staging / asset["file"], destination)
         for template in catalog["templates"]:
+            for content in [template["root"], *[n.get("content", {}) for n in template["nodes"]]]:
+                if "html" in content:
+                    for name, asset in assets.items():
+                        content["html"] = content["html"].replace("dapd-asset:" + asset["id"], "dapd-asset:" + remapped[name]["id"])
             for asset in all_assets(template):
                 replacement = remapped[asset["file"]]
                 asset.clear()

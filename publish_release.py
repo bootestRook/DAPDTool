@@ -136,7 +136,8 @@ def main():
                 raise ValueError("找不到指定的正式发布，请检查标签。")
             update_index(client, response.json())
     elif args.command == "app":
-        folder = ROOT / "release" / "Releases"
+        package_root = ROOT / "release" / f"DAPD任务工具-{VERSION}-Windows-x64"
+        folder = ROOT / "build-desktop" / "Releases"
         paths = sorted(p for p in folder.iterdir() if p.is_file() and (p.suffix in {".exe", ".nupkg", ".zip"} or p.name == "releases.win.json"))
         if not any(p.name.endswith("-Setup.exe") for p in paths) or not any(p.name.endswith("-full.nupkg") for p in paths):
             raise ValueError("缺少安装包或更新包，请先运行 build_desktop.py。")
@@ -150,7 +151,8 @@ def main():
             package = folder / filename
             if package.stat().st_size != asset["Size"] or hashlib.sha256(package.read_bytes()).hexdigest().lower() != asset["SHA256"].lower():
                 raise ValueError("更新包与清单校验值不一致，请重新构建。")
-        paths.extend(ROOT / "release" / name for name in ("build-info.json", "SHA256.txt"))
+        paths.extend(package_root / name for name in ("build-info.json", "SHA256.txt"))
+        paths.append(package_root.parent / (package_root.name + ".zip"))
         publish("v" + VERSION, "DAPD 任务工具 " + VERSION, (ROOT / "RELEASE-NOTES.md").read_text(encoding="utf-8"), paths, latest=True, direct=args.direct)
     else:
         package = args.package.resolve()

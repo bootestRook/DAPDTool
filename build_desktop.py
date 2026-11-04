@@ -16,8 +16,50 @@ ROOT = Path(__file__).resolve().parent
 RELEASE = ROOT / "release"
 BUILD = ROOT / "build-desktop"
 NAME = "DAPD任务工具"
-APPLICATION = RELEASE / NAME
-RUNTIME_PACKAGES = ["PySide6-Essentials", "shiboken6", "httpx", "httpcore", "anyio", "certifi", "idna", "h11", "pywin32", "typing_extensions", "Pillow", "velopack"]
+BUNDLE_NAME = f"{NAME}-{VERSION}-Windows-x64"
+PACKAGE = BUILD / "package"
+APPLICATION = BUILD / NAME
+PACKAGES = BUILD / "Releases"
+RUNTIME_PACKAGES = ["PySide6-Essentials", "PySide6-Addons", "shiboken6", "httpx", "httpcore", "anyio", "certifi", "idna", "h11", "pywin32", "typing_extensions", "Pillow", "velopack", "pypinyin"]
+
+
+def remove_output(path, parent):
+    """Remove only a direct build/release child, never a redirected path."""
+    if path.parent.resolve() != parent.resolve() or path.resolve().parent != parent.resolve() or path.is_symlink() or path.is_junction():
+        raise ValueError(f"Refusing to remove an output outside {parent}: {path}")
+    if path.is_dir():
+        shutil.rmtree(path)
+    else:
+        path.unlink(missing_ok=True)
+
+
+def package_release(package, release, name):
+    """Finish the new package before replacing or pruning existing releases."""
+    if Path(name).name != name or name in ("", ".", ".."):
+        raise ValueError("Invalid release package name")
+    release.mkdir(parents=True, exist_ok=True)
+    bundle = package.parent / (name + ".zip")
+    with zipfile.ZipFile(bundle, "w", zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(package.rglob("*")):
+            if path.is_file():
+                archive.write(path, path.relative_to(package).as_posix())
+    with zipfile.ZipFile(bundle) as archive:
+        if archive.testzip() is not None:
+            raise ValueError("Release ZIP verification failed")
+    unpacked = release / name
+    if unpacked.exists():
+        remove_output(unpacked, release)
+    # Fresh extraction inherits release permissions instead of carrying NTFS
+    # integrity labels and ACLs from the build staging directory.
+    unpacked.mkdir()
+    with zipfile.ZipFile(bundle) as archive:
+        archive.extractall(unpacked)
+    remove_output(package, package.parent)
+    bundle.replace(release / bundle.name)
+    for path in release.iterdir():
+        if path.name not in {name, name + ".zip"}:
+            remove_output(path, release)
+    return unpacked, release / bundle.name
 
 
 def main():
@@ -25,6 +67,9 @@ def main():
         raise SystemExit("Build this application on Windows x64.")
     RELEASE.mkdir(exist_ok=True)
     BUILD.mkdir(exist_ok=True)
+    if PACKAGE.exists():
+        remove_output(PACKAGE, BUILD)
+    PACKAGE.mkdir()
     # Use the same native Qt stock icon in the window and the executable.
     from PySide6.QtWidgets import QApplication, QStyle
     app = QApplication([])
@@ -32,9 +77,10 @@ def main():
     if not app.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView).pixmap(64, 64).save(str(icon), "ICO"):
         raise RuntimeError("Unable to create the Windows application icon")
     command = [sys.executable, "-X", "utf8", "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--windowed", "--noupx",
-               "--name", NAME, "--icon", str(icon), "--distpath", str(RELEASE), "--workpath", str(BUILD / "work"),
+               "--name", NAME, "--icon", str(icon), "--distpath", str(BUILD), "--workpath", str(BUILD / "work"),
                "--specpath", str(BUILD), "--exclude-module", "openai", "--exclude-module", "dapd_chat",
                "--exclude-module", "dapd_templates", "--exclude-module", "feishu_link", "--exclude-module", "PyQt6",
+               "--add-data", str(ROOT / "dapd_tool" / "editor_dist") + ";dapd_tool/editor_dist",
                str(ROOT / "dapd_desktop.py")]
     # Developer tools can prepend unrelated ICU/UCRT DLLs to PATH. Keep binary
     # discovery restricted to the build interpreter, its venv, and Windows.
@@ -62,9 +108,9 @@ def main():
                 "dependencies": versions, "default_templates": 0, "credentials_bundled": False,
                 "ai_modules_bundled": False, "signature": "unsigned", "packaging": "onedir",
                 "startup_extraction": False, "application_bytes": sum(path.stat().st_size for path in bundled_files)}
-    shutil.copy2(ROOT / "README-DAPD.md", RELEASE / "使用说明.md")
+    shutil.copy2(ROOT / "README-DAPD.md", PACKAGE / "使用说明.md")
 
-    licenses = RELEASE / "licenses"
+    licenses = PACKAGE / "licenses"
     licenses.mkdir(exist_ok=True)
     for package in RUNTIME_PACKAGES + ["PyInstaller"]:
         distribution = importlib.metadata.distribution(package)
@@ -83,7 +129,7 @@ def main():
     notices = """# Third-party notices
 
 This application includes Python, PySide6 / Qt, Shiboken, httpx, httpcore, anyio,
-certifi, idna, h11, Pillow, pywin32 and Velopack, and is bundled with PyInstaller.
+certifi, idna, h11, Pillow, pywin32, pypinyin and Velopack, and is bundled with PyInstaller.
 Component copyright and license notices are in the licenses directory.
 
 Qt / PySide6 / Shiboken 6.11.0 are distributed under their open-source LGPLv3 option.
@@ -100,42 +146,49 @@ PyInstaller bootloader exception: https://pyinstaller.org/en/stable/license.html
 Velopack source and MIT license: https://github.com/velopack/velopack/tree/1.2.161
 Package versions are recorded in build-info.json.
 """
-    (RELEASE / "THIRD-PARTY-NOTICES.md").write_text(notices, encoding="utf-8")
+    (PACKAGE / "THIRD-PARTY-NOTICES.md").write_text(notices, encoding="utf-8")
     source_files = [ROOT / name for name in ("dapd_desktop.py", "dapd_api.py", "build_desktop.py", "publish_release.py", "requirements-desktop.txt", "README-DAPD.md", "README.md", "RELEASE-NOTES.md")]
     source_files += list((ROOT / "dapd_tool").glob("*.py"))
     source_files += list((ROOT / "tests").glob("test_*.py"))
     source_files += list((ROOT / ".github" / "workflows").glob("*.yml"))
     source_files += list((ROOT / "licenses").glob("*.txt"))
-    with zipfile.ZipFile(RELEASE / "source.zip", "w", zipfile.ZIP_DEFLATED) as archive:
+    source_files.append(ROOT / "build_editor.py")
+    shutil.copy2(ROOT / "licenses" / "editor-third-party.txt", licenses / "editor-third-party.txt")
+    source_files += [ROOT / "editor" / name for name in ("package.json", "package-lock.json", "vite.config.js", "index.html")]
+    source_files += list((ROOT / "editor" / "src").glob("*"))
+    source_files += [p for p in (ROOT / "dapd_tool" / "editor_dist").rglob("*") if p.is_file()]
+    with zipfile.ZipFile(PACKAGE / "source.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for source in source_files:
             archive.write(source, str(source.relative_to(ROOT)))
     for filename in ("使用说明.md", "THIRD-PARTY-NOTICES.md", "source.zip"):
-        shutil.copy2(RELEASE / filename, APPLICATION / filename)
+        shutil.copy2(PACKAGE / filename, APPLICATION / filename)
     shutil.copytree(licenses, APPLICATION / "licenses", dirs_exist_ok=True)
     vpk = ROOT / ".tools" / "vpk.exe"
     if not vpk.is_file():
         raise RuntimeError("Install vpk 1.2.161 into .tools before building")
-    packages = RELEASE / "Releases"
+    packages = PACKAGES
     if packages.exists():
-        assert packages.resolve().is_relative_to(RELEASE.resolve()) and packages.name == "Releases"
-        shutil.rmtree(packages)
+        remove_output(packages, BUILD)
     subprocess.run([str(vpk), "pack", "--packId", "DAPDTool.Desktop", "--packTitle", NAME,
                     "--packVersion", VERSION, "--packDir", str(APPLICATION), "--mainExe", NAME + ".exe",
                     "--outputDir", str(packages), "--runtime", "win-x64", "--delta", "None",
                     "--icon", str(icon), "--releaseNotes", str(ROOT / "RELEASE-NOTES.md")], cwd=ROOT, check=True, env=build_env)
     bundled_files = [path for path in APPLICATION.rglob("*") if path.is_file()]
     artifacts = sorted(path for path in packages.iterdir() if path.is_file())
-    manifest.update({"packaging": "velopack-onedir", "repository": "bootestRook/DAPDTool",
+    with zipfile.ZipFile(packages / "DAPDTool.Desktop-win-Portable.zip") as portable:
+        portable.extractall(PACKAGE)
+    required = [PACKAGE / ".portable", PACKAGE / (NAME + ".exe"), PACKAGE / "Update.exe",
+                PACKAGE / "current" / (NAME + ".exe"), PACKAGE / "current" / "_internal" / "python313.dll"]
+    if not all(path.is_file() for path in required):
+        raise RuntimeError("Portable package is missing its launcher or runtime")
+    manifest.update({"packaging": "velopack-portable", "repository": "bootestRook/DAPDTool",
                      "application_bytes": sum(path.stat().st_size for path in bundled_files),
                      "artifacts": {path.name: {"bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()} for path in artifacts}})
-    (RELEASE / "build-info.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    checksum_files = sorted([*bundled_files, *artifacts, RELEASE / "source.zip", RELEASE / "build-info.json"])
-    (RELEASE / "SHA256.txt").write_text("\n".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.relative_to(RELEASE).as_posix()}" for path in checksum_files) + "\n", encoding="utf-8")
-    bundle = RELEASE / f"DAPD任务工具-{VERSION}-Windows-x64.zip"
-    with zipfile.ZipFile(bundle, "w", zipfile.ZIP_DEFLATED) as archive:
-        for path in [*packages.glob("*"), RELEASE / "使用说明.md", RELEASE / "build-info.json", RELEASE / "SHA256.txt", RELEASE / "THIRD-PARTY-NOTICES.md", RELEASE / "source.zip", *licenses.glob("*")]:
-            archive.write(path, str(path.relative_to(RELEASE)))
-    print(json.dumps({"installer": str(packages / "DAPDTool.Desktop-win-Setup.exe"), "zip": str(bundle), "ai_modules": len(forbidden), "default_templates": 0}, ensure_ascii=False))
+    (PACKAGE / "build-info.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    checksum_files = sorted(path for path in PACKAGE.rglob("*") if path.is_file())
+    (PACKAGE / "SHA256.txt").write_text("\n".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.relative_to(PACKAGE).as_posix()}" for path in checksum_files) + "\n", encoding="utf-8")
+    unpacked, bundle = package_release(PACKAGE, RELEASE, BUNDLE_NAME)
+    print(json.dumps({"executable": str(unpacked / (NAME + ".exe")), "zip": str(bundle), "unpacked": str(unpacked), "ai_modules": len(forbidden), "default_templates": 0}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

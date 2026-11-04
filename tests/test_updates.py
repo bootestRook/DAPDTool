@@ -107,6 +107,22 @@ class ReleaseTests(unittest.TestCase):
             updater.launch_update()
         manager.wait_exit_then_apply_updates.assert_called_once_with(info, silent=False, restart=True)
 
+    def test_portable_package_enables_updates_without_installation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".portable").write_bytes(b"")
+            (root / "current").mkdir()
+            (root / "current" / "sq.version").write_text("portable manifest", encoding="utf-8")
+            manager = Mock()
+            manager.get_current_version.return_value = "1.2.2"
+            manager.get_update_pending_restart.return_value = None
+            with patch("sys.frozen", True, create=True), patch("sys.executable", str(root / "current" / "DAPD任务工具.exe")), \
+                    patch.object(ProgramUpdater, "_manager", return_value=manager):
+                updater = ProgramUpdater()
+            self.assertTrue(updater.installed)
+            self.assertEqual(updater.current_version, "1.2.2")
+            manager.get_update_pending_restart.assert_called_once()
+
 
 class PublisherTests(unittest.TestCase):
     def test_resume_draft_verifies_existing_asset_before_activation(self):

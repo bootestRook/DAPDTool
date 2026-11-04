@@ -132,7 +132,7 @@ class UpdatesPage(QWidget):
         else:
             self.program_status.setText(f"当前 {self.updater.current_version} · 发布者尚未上传程序更新")
         if not self.updater.installed:
-            self.program_status.setText(self.program_status.text() + "\n请通过首次安装包安装，以启用软件内升级。")
+            self.program_status.setText(self.program_status.text() + "\n请运行完整便携包中的程序，以启用软件内升级。")
         self.refresh_content_status()
         if content:
             self.content_status.setText(self.content_status.text() + f" · 最新发布 {content['version']}")

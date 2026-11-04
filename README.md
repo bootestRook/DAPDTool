@@ -2,7 +2,7 @@
 
 Windows 桌面工具，用于选择 DAPD 项目、任务组与父任务，创建空任务或按自建模板批量创建多层任务。
 
-在 [Releases](https://github.com/bootestRook/DAPDTool/releases/latest) 下载 `DAPDTool.Desktop-win-Setup.exe` 后运行。无需安装 Python，不调用 AI。
+在 [Releases](https://github.com/bootestRook/DAPDTool/releases/latest) 下载 `DAPD任务工具-版本号-Windows-x64.zip`，完整解压后双击根目录的 `DAPD任务工具.exe`。无需安装程序或 Python，不调用 AI。
 
 打开“更新与共享”可在软件内下载程序更新，或单独同步共享模板和素材。首次启动无默认模板；每位用户填写自己的 DAPD API Key。
 
