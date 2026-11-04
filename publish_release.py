@@ -82,11 +82,13 @@ def publish(tag, title, notes, paths, *, latest, direct=False):
             raise ValueError("同一版本有多个发布草稿，请在 GitHub 保留一个后重试。")
         if drafts:
             release = drafts[0]
-            response = client.patch(API_URL + f"/releases/{release['id']}", json={"name": title, "body": notes})
+            response = client.patch(API_URL + f"/releases/{release['id']}", json={"name": title, "body": notes,
+                                                                                 "target_commitish": os.environ.get("GITHUB_SHA", "main")})
             response.raise_for_status()
         else:
             response = client.post(API_URL + "/releases", json={"tag_name": tag, "name": title, "body": notes,
-                                                                 "draft": True, "make_latest": "false"})
+                                                                 "draft": True, "make_latest": "false",
+                                                                 "target_commitish": os.environ.get("GITHUB_SHA", "main")})
             if response.status_code != 201:
                 raise ValueError(f"创建发布草稿失败（HTTP {response.status_code}），请检查仓库写入权限。")
             release = response.json()

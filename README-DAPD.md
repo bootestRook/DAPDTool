@@ -85,7 +85,8 @@ API Key 使用 Windows 当前用户的 DPAPI 加密。不要把本机数据目�
 
 ## 发布者：程序新版
 
-修改代码后，递增 `dapd_tool/__init__.py` 的 VERSION，更新 RELEASE-NOTES.md，运行测试和构建脚本，再运行 `publish_release.py app`。
+修改代码后，递增 `dapd_tool/__init__.py` 的 VERSION，更新 RELEASE-NOTES.md，并推送到 GitHub 的 main 分支。在仓库 **Actions → Build and publish Windows → Run workflow** 启动发布。GitHub 会在 Windows 环境运行测试、生成安装包、上传 Releases 并激活更新索引，不需要从本机上传程序大包。
+也可在本机运行测试、`build_desktop.py` 和 `publish_release.py app`。正式版本号不可重复；发布失败的草稿可以重试。
 脚本先创建发布草稿、上传并核对所有文件，再转为正式发布并更新仓库根目录的 `updates.json`。仅上传安装 EXE 不足以启用更新，必须同时上传构建生成的 `releases.win.json` 和 `*-full.nupkg`。
 若版本发布成功但索引更新失败，运行 `publish_release.py index v版本号` 重试。发布后运行 `git pull --ff-only`，取回脚本写入仓库的索引提交。GitHub 的文件缓存可能需要数分钟刷新，稍后手动检查即可。
 

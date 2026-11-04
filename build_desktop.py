@@ -104,6 +104,7 @@ Package versions are recorded in build-info.json.
     source_files = [ROOT / name for name in ("dapd_desktop.py", "dapd_api.py", "build_desktop.py", "publish_release.py", "requirements-desktop.txt", "README-DAPD.md", "README.md", "RELEASE-NOTES.md")]
     source_files += list((ROOT / "dapd_tool").glob("*.py"))
     source_files += list((ROOT / "tests").glob("test_*.py"))
+    source_files += list((ROOT / ".github" / "workflows").glob("*.yml"))
     source_files += list((ROOT / "licenses").glob("*.txt"))
     with zipfile.ZipFile(RELEASE / "source.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for source in source_files:

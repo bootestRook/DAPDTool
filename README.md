@@ -20,5 +20,5 @@ dotnet tool install vpk --version 1.2.161 --tool-path .tools
 .\.venv-desktop\Scripts\python.exe build_desktop.py
 ```
 
-发布者递增 `dapd_tool/__init__.py` 的 VERSION、填写 RELEASE-NOTES.md，构建后运行 `publish_release.py app`。
+发布者递增 `dapd_tool/__init__.py` 的 VERSION、填写 RELEASE-NOTES.md 并推送代码，然后在 GitHub **Actions → Build and publish Windows → Run workflow** 完成测试、构建和发布。也可本机构建后运行 `publish_release.py app`。
 内容包由软件导出，运行 `publish_release.py content 内容包路径` 发布。发布工具自动更新仓库的 `updates.json`，客户端读取此静态索引，无需 GitHub API 配额或登录。发布后运行 `git pull --ff-only` 取回索引提交。发布工具只使用发布者机器或 CI 的凭据，客户端不包含 GitHub Token。

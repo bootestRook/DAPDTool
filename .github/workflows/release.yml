@@ -1,0 +1,44 @@
+name: Build and publish Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dapd-program-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-2022
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: '1'
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.9'
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv-desktop
+          .\.venv-desktop\Scripts\python.exe -m pip install -r requirements-desktop.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Python dependency installation failed' }
+          dotnet tool install vpk --version 1.2.161 --tool-path .tools
+          if ($LASTEXITCODE -ne 0) { throw 'Velopack installation failed' }
+      - name: Test
+        run: .\.venv-desktop\Scripts\python.exe -X utf8 -m unittest discover -s tests -v
+      - name: Build installer and update packages
+        run: .\.venv-desktop\Scripts\python.exe -X utf8 build_desktop.py
+      - name: Publish verified release and activate update index
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .\.venv-desktop\Scripts\python.exe -X utf8 publish_release.py app
