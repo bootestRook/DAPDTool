@@ -5,12 +5,10 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
-from PySide6.QtWidgets import (QButtonGroup, QFrame, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QScrollArea, QSizePolicy, QStyle,
-    QStyledItemDelegate, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import QButtonGroup, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QSizePolicy, QStyle, QStyledItemDelegate, QVBoxLayout, QWidget
 
 from .avatars import AvatarCache
-from .people import child_departments, department_paths, scoped_users
+from ...people import child_departments, department_paths, scoped_users
 
 ROLE = Qt.ItemDataRole.UserRole
 

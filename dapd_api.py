@@ -36,6 +36,8 @@ class DapdClient:
         try:
             response = self.http.request(method, "/trpc/" + procedure,
                 **({"json": payload} if write else {"params": {"input": json.dumps(payload, ensure_ascii=False)}}))
+        except httpx.TimeoutException as exc:
+            raise DapdError("DAPD 请求超时，请检查网络后重试。", uncertain=write) from exc
         except httpx.RequestError as exc:
             raise DapdError("DAPD 网络请求失败。", uncertain=write) from exc
         if response.status_code >= 400:
@@ -54,11 +56,19 @@ class DapdClient:
         return [{k: p[k] for k in ("id", "name")}
                 for p in self.request("GET", "project.getProjects", {}) if not p.get("isArchived")]
 
-    def groups(self, projectId):
-        groups = []
+    def groups(self, projectId, *, checkpoint=lambda: None):
+        groups, seen = [], set()
         offset = 0
         while True:
+            checkpoint()
             page = self.request("GET", "taskGroup.getTaskGroups", {"projectId": projectId, "limit": 100, "offset": offset})
+            checkpoint()
+            if not isinstance(page, list) or any(not isinstance(g, dict) or not g.get("id") for g in page):
+                raise ValueError("DAPD 返回了无效的任务组列表，请重新读取。")
+            identifiers = [g["id"] for g in page]
+            if len(set(identifiers)) != len(identifiers) or seen.intersection(identifiers):
+                raise ValueError("DAPD 任务组分页重复，已停止读取，请稍后重试。")
+            seen.update(identifiers)
             groups.extend({k: g[k] for k in ("id", "name", "status") if k in g} for g in page)
             if len(page) < 100:
                 return groups
@@ -123,3 +133,14 @@ class DapdClient:
         if not isinstance(task, dict) or not task.get("id"):
             raise DapdError("DAPD 创建请求未返回任务 ID。", uncertain=True)
         return task_summary(task)
+
+
+def with_api(key, operation):
+    api = DapdClient(key)
+    try:
+        return operation(api)
+    finally:
+        api.close()
+
+def task_url(identifier):
+    return BASE_URL + "/task/" + identifier

@@ -12,9 +12,9 @@ from PySide6.QtCore import Qt, QEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from dapd_tool.content_editor import ContentEditor
-from dapd_tool.media import empty_content, description_assets
-from dapd_tool.ui import configure_app
+from dapd_tool.ui.widgets.content_editor import ContentEditor
+from dapd_tool.media import Assets, empty_content, description_assets, image_assets
+from dapd_tool.ui.theme import configure_app
 
 
 class DescriptionEditorTests(unittest.TestCase):
@@ -144,6 +144,70 @@ class DescriptionEditorTests(unittest.TestCase):
         self.assertFalse(self.js("editor.isEditable"))
         self.assertFalse(self.js("!!document.querySelector('.empty-add, [role=switch], .bn-formatting-toolbar')"))
 
+
+
+
+class RichEditorTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app=QApplication.instance() or QApplication([])
+        configure_app(cls.app)
+
+    def test_heading_alignment_font_size_and_image_survive_reopen(self):
+        with tempfile.TemporaryDirectory() as folder:
+            editor=ContentEditor(folder);editor.set_content(empty_content())
+            editor.show();self.app.processEvents()
+            editor.description.setPlainText('说明文字')
+            editor.description.evaluate("editor.updateBlock(editor.document[0],{type:'heading',props:{level:2,textAlignment:'center'}})")
+            editor.description.evaluate("editor.updateBlock(editor.document[0],{content:[{type:'text',text:'说明文字',styles:{fontSize:'24px',bold:true}}]})")
+            source=Path(folder)/'source.png';Image.new('RGB',(16,10),'teal').save(source)
+            asset=Assets(folder).import_file(source)
+            editor.description.insert_asset(asset)
+            content=editor.content()
+            self.assertIn('24px',content['html'])
+            self.assertIn('center',content['html'])
+            self.assertIn('dapd-asset:',content['html'])
+            editor.set_content(content)
+            actual=editor.description.evaluate("JSON.stringify(editor.document)")
+            self.assertIn('inlineImage',actual)
+            self.assertIn('heading',actual)
+            self.assertNotIn('file://',actual)
+            self.assertEqual(editor.content(),content)
+            editor.close()
+
+    def test_block_types_include_screenshot_options(self):
+        with tempfile.TemporaryDirectory() as folder:
+            editor=ContentEditor(folder);editor.set_content(empty_content())
+            types=json.loads(editor.description.evaluate("JSON.stringify(Object.keys(editor.schema.blockSchema))"))
+            for kind in ['heading','bulletListItem','numberedListItem','checkListItem','codeBlock','quote','toggleListItem']:
+                self.assertIn(kind,types)
+            editor.close()
+
+    def test_pasted_image_is_copied_to_template_assets(self):
+        import base64
+        import time
+        from PySide6.QtTest import QTest
+        with tempfile.TemporaryDirectory() as folder:
+            source=Path(folder)/'clipboard.png';Image.new('RGB',(14,11),'teal').save(source)
+            raw=base64.b64encode(source.read_bytes()).decode()
+            editor=ContentEditor(folder);editor.set_content(empty_content())
+            editor.show();self.app.processEvents()
+            editor.description.evaluate("editor.focus()")
+            deadline = time.monotonic() + 5
+            while not editor.description.evaluate("Boolean(document.activeElement?.closest('.bn-editor'))"):
+                self.assertLess(time.monotonic(), deadline, "编辑器未取得输入焦点")
+                QTest.qWait(20)
+            script="const dt=new DataTransfer();dt.setData('text/html','<p>粘贴图片</p><img src=\"data:image/png;base64,"+raw+"\">');document.querySelector('.bn-editor').dispatchEvent(new ClipboardEvent('paste',{clipboardData:dt,bubbles:true,cancelable:true}));"
+            editor.description.evaluate(script)
+            deadline = time.monotonic() + 5
+            while not editor.description.evaluate("window.getContent().pending === 0 && window.getContent().html.includes('data:image/')"):
+                self.assertLess(time.monotonic(), deadline, "粘贴的图片未完成插入")
+                QTest.qWait(20)
+            content=editor.content()
+            self.assertEqual(len(image_assets(content)),1)
+            self.assertIn('dapd-asset:',content['html'])
+            self.assertNotIn('data:image/',content['html'])
+            editor.close()
 
 if __name__ == "__main__":
     unittest.main()

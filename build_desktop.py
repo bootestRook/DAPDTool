@@ -62,9 +62,26 @@ def package_release(package, release, name):
     return unpacked, release / bundle.name
 
 
+def collect_sources(root):
+    """Include nested UI packages and everything needed to run source checks/tests."""
+    names = ("dapd_desktop.py", "dapd_api.py", "build_desktop.py", "build_editor.py",
+             "publish_release.py", "requirements-desktop.txt", "README-DAPD.md", "README.md",
+             "RELEASE-NOTES.md", "AGENTS.md")
+    files = [root / name for name in names]
+    for folder in ("dapd_tool", "tests", "scripts"):
+        files.extend((root / folder).rglob("*.py"))
+    files.extend((root / ".github" / "workflows").glob("*.yml"))
+    files.extend((root / "licenses").glob("*.txt"))
+    files.extend(root / "editor" / name for name in ("package.json", "package-lock.json", "vite.config.js", "index.html"))
+    files.extend(path for path in (root / "editor" / "src").rglob("*") if path.is_file())
+    files.extend(path for path in (root / "dapd_tool" / "editor_dist").rglob("*") if path.is_file())
+    return sorted(set(files))
+
+
 def main():
     if sys.platform != "win32":
         raise SystemExit("Build this application on Windows x64.")
+    subprocess.run([sys.executable, "-X", "utf8", str(ROOT / "scripts" / "check_structure.py")], cwd=ROOT, check=True)
     RELEASE.mkdir(exist_ok=True)
     BUILD.mkdir(exist_ok=True)
     if PACKAGE.exists():
@@ -147,18 +164,9 @@ Velopack source and MIT license: https://github.com/velopack/velopack/tree/1.2.1
 Package versions are recorded in build-info.json.
 """
     (PACKAGE / "THIRD-PARTY-NOTICES.md").write_text(notices, encoding="utf-8")
-    source_files = [ROOT / name for name in ("dapd_desktop.py", "dapd_api.py", "build_desktop.py", "publish_release.py", "requirements-desktop.txt", "README-DAPD.md", "README.md", "RELEASE-NOTES.md")]
-    source_files += list((ROOT / "dapd_tool").glob("*.py"))
-    source_files += list((ROOT / "tests").glob("test_*.py"))
-    source_files += list((ROOT / ".github" / "workflows").glob("*.yml"))
-    source_files += list((ROOT / "licenses").glob("*.txt"))
-    source_files.append(ROOT / "build_editor.py")
     shutil.copy2(ROOT / "licenses" / "editor-third-party.txt", licenses / "editor-third-party.txt")
-    source_files += [ROOT / "editor" / name for name in ("package.json", "package-lock.json", "vite.config.js", "index.html")]
-    source_files += list((ROOT / "editor" / "src").glob("*"))
-    source_files += [p for p in (ROOT / "dapd_tool" / "editor_dist").rglob("*") if p.is_file()]
     with zipfile.ZipFile(PACKAGE / "source.zip", "w", zipfile.ZIP_DEFLATED) as archive:
-        for source in source_files:
+        for source in collect_sources(ROOT):
             archive.write(source, str(source.relative_to(ROOT)))
     for filename in ("使用说明.md", "THIRD-PARTY-NOTICES.md", "source.zip"):
         shutil.copy2(PACKAGE / filename, APPLICATION / filename)

@@ -2,7 +2,6 @@ import io
 import os
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -10,8 +9,8 @@ from PIL import Image
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
-from dapd_tool.assignee_picker import AssigneePicker, ROLE
-from dapd_tool.avatars import avatar_thumbnail
+from dapd_tool.ui.widgets.assignee_picker import AssigneePicker, ROLE
+from dapd_tool.ui.widgets.avatars import avatar_thumbnail
 from dapd_tool.people import child_departments, department_paths, load_people, scoped_users
 
 
@@ -56,7 +55,7 @@ class PeopleTests(unittest.TestCase):
     def test_avatar_load_is_bounded_sanitized_and_does_not_send_credentials(self):
         source = io.BytesIO(); Image.new("RGB", (100, 50), "blue").save(source, "PNG")
         response = Mock(); response.iter_bytes.return_value = [source.getvalue()]
-        with patch("dapd_tool.avatars.httpx.stream") as stream:
+        with patch("dapd_tool.ui.widgets.avatars.httpx.stream") as stream:
             stream.return_value.__enter__.return_value = response
             value = avatar_thumbnail("https://example.com/avatar.png")
             self.assertNotIn("headers", stream.call_args.kwargs)

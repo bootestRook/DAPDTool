@@ -14,7 +14,7 @@ from PIL import Image, PngImagePlugin
 from dapd_api import DapdClient
 from dapd_tool.catalog import project_id_from_text
 from dapd_tool.engine import run_job, reset_absent_uploads
-from dapd_tool.media import Assets, description_html, empty_content
+from dapd_tool.media import Assets, description_html
 from dapd_tool.model import make_plan
 from dapd_tool.storage import Store
 
@@ -185,8 +185,9 @@ class MediaTests(unittest.TestCase):
 
 os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
 from PySide6.QtWidgets import QApplication
-from dapd_tool.ui import TemplateDialog, configure_app
-from dapd_tool.content_editor import ContentEditor
+from dapd_tool.ui.dialogs.template import TemplateDialog
+from dapd_tool.ui.theme import configure_app
+from dapd_tool.ui.widgets.content_editor import ContentEditor
 
 
 class ContentEditorTests(unittest.TestCase):

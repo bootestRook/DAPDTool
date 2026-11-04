@@ -11,43 +11,104 @@ from .people import load_people
 EDIT_FIELDS = {"title", "description", "status", "priority", "assigneeId", "taskGroupId", "parentTaskId", "dueDate", "tags", "copiedUserIds", "relatedTaskIds", "fieldValues"}
 
 
-def current_user(api):
+def current_user(api, *, checkpoint=lambda: None):
+    checkpoint()
     identifier = api.request("GET", "userSetting.getSettings", {})["userId"]
+    checkpoint()
     return api.request("GET", "user.getById", {"id": identifier})
 
 
-def list_created_tasks(api, progress=lambda _: None):
-    user = current_user(api)
-    tasks, seen, offset = [], set(), 0
-    while True:
-        page = api.request("GET", "task.getTasks", {"createdById": user["id"], "onlyRootTasks": False, "limit": 100, "offset": offset})
-        if not isinstance(page, list) or any(t.get("createdById") != user["id"] for t in page):
-            raise ValueError("DAPD 返回了不符合创建者筛选的任务，已停止加载。")
-        fresh = [t for t in page if t["id"] not in seen]
-        if page and not fresh:
-            raise ValueError("DAPD 分页未前进，请稍后重新加载。")
-        tasks.extend(fresh)
-        seen.update(t["id"] for t in fresh)
-        progress(len(tasks))
-        if len(page) < 100:
-            break
-        offset += len(page)
-    own_ids = set(seen)
-    pending = [t.get("parentTaskId") for t in tasks if t.get("parentTaskId") not in seen]
-    while pending:
-        identifier = pending.pop()
-        if not identifier or identifier in seen:
-            continue
-        seen.add(identifier)
-        task = media_api.raw_task(api, identifier)
-        task["contextOnly"] = True
-        tasks.append(task)
-        pending.append(task.get("parentTaskId"))
-    groups, statuses = {}, {}
-    for project in {t["projectId"] for t in tasks}:
-        groups.update({g["id"]: g["name"] for g in api.groups(project)})
-        statuses[project] = {s["key"]: s["name"] for s in api.request("GET", "taskStatusConfig.listByProject", {"projectId": project})}
-    return {"user": user, "tasks": tasks, "own_ids": own_ids, "groups": groups, "statuses": statuses}
+def task_hierarchy(tasks):
+    """Return parent-first IDs, rejecting cycles without recursive traversal."""
+    by_id = {t["id"]: t for t in tasks}
+    if len(by_id) != len(tasks):
+        raise ValueError("DAPD 返回了重复的任务 ID，已停止读取。")
+    children, roots = {}, []
+    for task in tasks:
+        parent = task.get("parentTaskId")
+        if parent in by_id:
+            children.setdefault(parent, []).append(task["id"])
+        else:
+            roots.append(task["id"])
+    order = []
+    while roots:
+        identifier = roots.pop()
+        order.append(identifier)
+        roots.extend(children.get(identifier, []))
+    if len(order) != len(tasks):
+        raise ValueError("DAPD 任务的父子关系存在循环，已停止读取，请在 DAPD 中修正后重试。")
+    return order
+
+
+class TaskReadCancelled(Exception):
+    pass
+
+
+def list_created_tasks(api, project_id, progress=lambda _: None, stop=None):
+    if not project_id:
+        raise ValueError("请先选择项目。")
+    data = {"project_id": project_id, "user": {}, "tasks": [], "own_ids": set(),
+            "groups": {}, "statuses": {}, "complete": False}
+    tasks, seen = data["tasks"], set()
+
+    def checkpoint():
+        if stop is not None and stop.is_set():
+            raise TaskReadCancelled()
+
+    def report(text):
+        checkpoint()
+        progress(text)
+
+    try:
+        report("正在确认当前用户…")
+        data["user"] = user = current_user(api, checkpoint=checkpoint)
+        offset = 0
+        while True:
+            report(f"正在读取第 {offset // 100 + 1} 页 · 已读取 {len(data['own_ids'])} 个任务…")
+            page = api.request("GET", "task.getTasks", {"projectId": project_id,
+                "createdById": user["id"], "onlyRootTasks": False, "limit": 100, "offset": offset})
+            if not isinstance(page, list) or any(not isinstance(t, dict) or not t.get("id") or
+                    t.get("createdById") != user["id"] or t.get("projectId") != project_id for t in page):
+                raise ValueError("DAPD 返回了不符合项目或创建者筛选的任务，已停止读取。")
+            identifiers = [t["id"] for t in page]
+            if len(set(identifiers)) != len(identifiers) or seen.intersection(identifiers):
+                raise ValueError("DAPD 任务分页重复，已停止读取，请稍后重试。")
+            tasks.extend(page)
+            seen.update(identifiers)
+            data["own_ids"].update(identifiers)
+            checkpoint()
+            if len(page) < 100:
+                break
+            offset += len(page)
+        pending = [t.get("parentTaskId") for t in tasks]
+        parents_read = 0
+        while pending:
+            identifier = pending.pop()
+            if not identifier or identifier in seen:
+                continue
+            report(f"已读取 {len(data['own_ids'])} 个任务 · 正在补齐父任务（已读取 {parents_read} 个）…")
+            task = media_api.raw_task(api, identifier)
+            if task["id"] != identifier or task.get("projectId") != project_id:
+                raise ValueError("DAPD 返回的父任务不属于当前项目，已停止读取。")
+            seen.add(identifier)
+            task["contextOnly"] = task.get("createdById") != user["id"]
+            if not task["contextOnly"]:
+                data["own_ids"].add(identifier)
+            tasks.append(task)
+            parents_read += 1
+            pending.append(task.get("parentTaskId"))
+        task_hierarchy(tasks)
+        if tasks:
+            report(f"已读取 {len(data['own_ids'])} 个任务 · 正在读取任务组…")
+            data["groups"] = {g["id"]: g["name"] for g in api.groups(project_id, checkpoint=checkpoint)}
+            report(f"已读取 {len(data['own_ids'])} 个任务 · 正在读取状态…")
+            data["statuses"][project_id] = {s["key"]: s["name"] for s in
+                api.request("GET", "taskStatusConfig.listByProject", {"projectId": project_id})}
+        checkpoint()
+        data["complete"] = True
+    except TaskReadCancelled:
+        task_hierarchy(tasks)
+    return data
 
 
 def edit_context(api, identifier):

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T00:10:28.180Z",
+  "generatedAt": "2026-11-04T09:20:16.000Z",
   "title": "Design System: DAPD 桌面工具",
   "extensions": {
     "colorMeta": {
@@ -241,6 +241,100 @@
           "oklch(83.57% 0.02041 232.73)",
           "oklch(95.00% 0.02041 232.73)"
         ]
+      },
+      "editor-text": {
+        "role": "neutral",
+        "displayName": "描述区正文"
+      },
+      "editor-muted": {
+        "role": "neutral",
+        "displayName": "描述区次要交互色"
+      },
+      "editor-line": {
+        "role": "neutral",
+        "displayName": "编辑器浮层细边框"
+      },
+      "editor-focus": {
+        "role": "primary",
+        "displayName": "编辑器局部焦点与开关蓝"
+      },
+      "editor-selection": {
+        "role": "primary",
+        "displayName": "描述文字选区蓝"
+      },
+      "editor-format-active": {
+        "role": "neutral",
+        "displayName": "选区格式按钮启用背景"
+      },
+      "assignee-tab-active": {
+        "role": "neutral",
+        "displayName": "负责人范围选中背景",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "assignee-tabs-border": {
+        "role": "neutral",
+        "displayName": "负责人范围标签外框",
+        "tonalRamp": [
+          "oklch(15.00% 0.00936 232.38)",
+          "oklch(26.43% 0.00936 232.38)",
+          "oklch(37.86% 0.00936 232.38)",
+          "oklch(49.29% 0.00936 232.38)",
+          "oklch(60.71% 0.00936 232.38)",
+          "oklch(72.14% 0.00936 232.38)",
+          "oklch(83.57% 0.00936 232.38)",
+          "oklch(95.00% 0.00936 232.38)"
+        ]
+      },
+      "avatar-background": {
+        "role": "neutral",
+        "displayName": "头像首字背景",
+        "tonalRamp": [
+          "oklch(15.00% 0.01140 217.54)",
+          "oklch(26.43% 0.01140 217.54)",
+          "oklch(37.86% 0.01140 217.54)",
+          "oklch(49.29% 0.01140 217.54)",
+          "oklch(60.71% 0.01140 217.54)",
+          "oklch(72.14% 0.01140 217.54)",
+          "oklch(83.57% 0.01140 217.54)",
+          "oklch(95.00% 0.01140 217.54)"
+        ]
+      },
+      "avatar-initial": {
+        "role": "neutral",
+        "displayName": "头像首字文字",
+        "tonalRamp": [
+          "oklch(15.00% 0.06977 219.98)",
+          "oklch(26.43% 0.06977 219.98)",
+          "oklch(37.86% 0.06977 219.98)",
+          "oklch(49.29% 0.06977 219.98)",
+          "oklch(60.71% 0.06977 219.98)",
+          "oklch(72.14% 0.06977 219.98)",
+          "oklch(83.57% 0.06977 219.98)",
+          "oklch(95.00% 0.06977 219.98)"
+        ]
+      },
+      "assignee-marker": {
+        "role": "primary",
+        "displayName": "负责人选中标记",
+        "tonalRamp": [
+          "oklch(15.00% 0.14276 243.29)",
+          "oklch(26.43% 0.14276 243.29)",
+          "oklch(37.86% 0.14276 243.29)",
+          "oklch(49.29% 0.14276 243.29)",
+          "oklch(60.71% 0.14276 243.29)",
+          "oklch(72.14% 0.14276 243.29)",
+          "oklch(83.57% 0.14276 243.29)",
+          "oklch(95.00% 0.14276 243.29)"
+        ]
       }
     },
     "typographyMeta": {
@@ -255,11 +349,30 @@
       "body": {
         "displayName": "操作与正文",
         "purpose": "按钮、输入、列表和常显说明。"
+      },
+      "editor-body": {
+        "displayName": "描述正文",
+        "purpose": "嵌入 BlockNote 的默认正文，14px、1.65 行高；内容保留自身的标题层级和字号。"
+      },
+      "editor-control": {
+        "displayName": "选区格式浮层",
+        "purpose": "仅选择文字时显示的紧凑格式操作，12px 控件文字与图标；启用格式为深灰底白图标。"
       }
     },
-    "shadows": [],
+    "shadows": [
+      {
+        "name": "editor-popover",
+        "value": "0 3px 12px rgb(0 0 0 / 15%)",
+        "purpose": "仅用于描述区插入菜单与选区格式浮层，静止画布和原生窗口保持平面。"
+      }
+    ],
     "motion": [],
-    "breakpoints": []
+    "breakpoints": [
+      {
+        "name": "editor-narrow",
+        "value": "480px"
+      }
+    ]
   },
   "components": [
     {
@@ -287,11 +400,11 @@
       "css": ".ds-field-label{font-family:'Microsoft YaHei UI';font-size:10pt;color:#253440;display:flex;align-items:center;gap:20px}.ds-field{font-family:'Microsoft YaHei UI';font-size:10pt;background:#fff;color:#253440;border:1px solid #bdcad1;border-radius:4px;padding:7px 9px;min-height:20px}.ds-field::placeholder{color:#566875;opacity:1}.ds-field:focus-visible{border-color:#147788;outline:none}.ds-field:disabled{color:#78868e;background:#edf0f2}.ds-field::selection{background:#d8edef;color:#183c4a}"
     },
     {
-      "name": "四页导航",
+      "name": "五页导航",
       "kind": "nav",
       "refersTo": "navigation",
-      "description": "固定四个标签，选中状态使用青绿下划线；更新提示属于标签文字。",
-      "html": "<nav class=\"ds-nav\" aria-label=\"功能页\"><button>创建任务</button><button>我的模板</button><button>创建记录</button><button aria-current=\"page\">更新与共享</button></nav>",
+      "description": "依次固定五个功能标签，选中状态使用青绿下划线；更新提示属于标签文字。",
+      "html": "<nav class=\"ds-nav\" aria-label=\"功能页\"><button>创建任务</button><button>我的模板</button><button>创建记录</button><button>更新与共享</button><button aria-current=\"page\">我创建的任务</button></nav>",
       "css": ".ds-nav{display:flex;background:#f4f6f8}.ds-nav button{font-family:'Microsoft YaHei UI';font-size:10pt;background:transparent;color:#566875;border:0;border-bottom:2px solid transparent;padding:12px 25px}.ds-nav button[aria-current]{color:#125d6c;border-bottom-color:#146979;font-weight:600}.ds-nav button:focus-visible{background:#e2edf0;outline:none}"
     },
     {
@@ -309,15 +422,61 @@
       "description": "来源前缀、子任务数和内容版本直接显示；示例只用于设计预览，不是默认模板。",
       "html": "<div class=\"ds-template-list\" role=\"listbox\" aria-label=\"模板列表\" tabindex=\"0\"><div role=\"option\" aria-selected=\"true\">共享 · 模板名称<br>4 个子任务 · v1.0.0</div></div>",
       "css": ".ds-template-list{font-family:'Microsoft YaHei UI';font-size:10pt;background:#fff;color:#253440;border:1px solid #bdcad1;border-radius:4px}.ds-template-list:focus-visible{border-color:#147788;outline:none}.ds-template-list [role=option]{padding:7px 4px;min-height:22px}.ds-template-list [aria-selected=true]{background:#d8edef;color:#183c4a}"
+    },
+    {
+      "name": "选区格式浮层",
+      "kind": "custom",
+      "refersTo": "editor-format-toolbar",
+      "description": "本地 BlockNote 仅在选择文字时出现的白底紧凑图标浮层；启用格式使用 #404040 深灰底白图标，局部柔和阴影。窄于 480px 时受视口宽度约束并可换行。片段仅示意选区已打开的格式状态，不代表常显顶部工具栏。",
+      "html": "<div class=\"ds-selection-preview\"><div class=\"ds-selection-tools\" role=\"toolbar\" aria-label=\"文字格式\"><button class=\"ds-selection-type\" aria-label=\"段落类型\">文本 ▾</button><button aria-label=\"粗体\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 4h7a4 4 0 0 1 0 8H6zm0 8h8a4 4 0 0 1 0 8H6z\"/></svg></button><button aria-label=\"斜体\" aria-pressed=\"false\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10 4h10M4 20h10M15 4 9 20\"/></svg></button><button aria-label=\"下划线\" aria-pressed=\"false\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3v8a6 6 0 0 0 12 0V3M4 21h16\"/></svg></button><button aria-label=\"左对齐\" aria-pressed=\"false\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 5h16M4 10h10M4 15h16M4 20h10\"/></svg></button></div><p><span class=\"ds-selected-text\">选中的描述文字</span></p></div>",
+      "css": ".ds-selection-preview{font:14px/1.65 'Microsoft YaHei UI',sans-serif;color:#202124;background:#fff;padding:14px;min-height:115px}.ds-selection-tools{display:inline-flex;align-items:center;gap:1px;padding:3px 5px;border:1px solid #ececec;border-radius:5px;background:#fff;box-shadow:0 3px 12px rgb(0 0 0 / 15%)}.ds-selection-tools button{display:grid;place-items:center;width:24px;height:24px;min-width:24px;padding:2px;border:0;border-radius:3px;color:#252525;background:transparent;cursor:pointer}.ds-selection-tools button.ds-selection-type{display:block;width:auto;padding-inline:6px;font:12px 'Microsoft YaHei UI',sans-serif;white-space:nowrap}.ds-selection-tools button:hover{background:#f0f0f0}.ds-selection-tools button[aria-pressed=true]{background:#404040;color:#fff}.ds-selection-tools button:active{background:#e5e5e5}.ds-selection-tools button[aria-pressed=true]:active{background:#404040}.ds-selection-tools button:focus-visible{outline:2px solid #1677ff;outline-offset:2px}.ds-selection-tools svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.ds-selection-preview p{margin:16px 0 0}.ds-selected-text{background:#3468db;color:#fff}@media(max-width:480px){.ds-selection-tools{flex-wrap:wrap;max-width:calc(100vw - 20px)}}"
+    },
+    {
+      "name": "描述画布与插入菜单",
+      "kind": "custom",
+      "refersTo": "editor-insert-menu",
+      "description": "白色画布仅保留可收起的“描述”标题、媒体自动横排开关和行首 +。点击 + 或输入 / 打开 256px 可滚动菜单，分为基础（文本、H1–H6、列表、代码、表格、引用、分割线）、媒体（图片、视频、音频、文件）、折叠（H1–H3、列表）、其他（表情）。标题收起时原生容器高 48px，展开或重新加载节点恢复至少 200px。横排媒体为两列，480px 及以下改为单列；排列设置以 HTML data-media-layout 包裹层保存。只读时隐藏编辑入口及开关。片段只展示菜单已打开后的部分条目，描述区无独立插图按钮或常显格式栏。",
+      "html": "<section class=\"ds-description\"><header><button class=\"ds-description-toggle\" aria-expanded=\"true\">⌄ 描述</button><label class=\"ds-media-layout\"><input type=\"checkbox\" role=\"switch\" aria-label=\"媒体自动横排\"><span class=\"ds-switch-track\" aria-hidden=\"true\"></span>媒体自动横排</label></header><div class=\"ds-description-body\"><button class=\"ds-add-block\" aria-label=\"插入内容\">+</button><div class=\"ds-insert-menu\" role=\"menu\" aria-label=\"插入内容\"><p>基础</p><button role=\"menuitem\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 5h16M12 5v15M8 20h8\"/></svg><span>文本<small>从纯文本开始编写。</small></span></button><button role=\"menuitem\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 5v14M14 5v14M4 12h10M18 10l2-2v11\"/></svg><span>1 级标题<small>用于顶级标题</small></span></button><p>媒体</p><button role=\"menuitem\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"m3 16 5-5 5 5 3-3 5 5M8 7h.01\"/></svg><span>图片<small>上传或嵌入图片</small></span></button><p>折叠</p><button role=\"menuitem\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m5 7 5 5-5 5M14 5v14M20 5v14M14 12h6\"/></svg><span>可折叠标题</span></button><p>其他</p><button role=\"menuitem\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 9h.01M16 9h.01M8 15q4 4 8 0\"/></svg><span>表情</span></button></div></div></section>",
+      "css": ".ds-description{font:14px/1.65 'Microsoft YaHei UI',sans-serif;background:#fff;color:#202124;min-height:200px}.ds-description header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px 10px}.ds-description-toggle{font:600 13px 'Microsoft YaHei UI',sans-serif;border:0;background:transparent;color:#202124;padding:2px 0}.ds-media-layout{display:inline-flex;align-items:center;gap:7px;font-size:11px;white-space:nowrap;cursor:pointer;position:relative}.ds-media-layout input{position:absolute;left:0;width:28px;height:16px;margin:0;opacity:0}.ds-switch-track{width:28px;height:16px;border-radius:8px;background:#cdd0d6}.ds-switch-track:after{display:block;width:12px;height:12px;margin:2px;border-radius:50%;background:#fff;content:''}.ds-media-layout input:checked+.ds-switch-track{background:#1677ff}.ds-media-layout input:checked+.ds-switch-track:after{transform:translateX(12px)}.ds-description-body{position:relative;padding:16px 28px 36px 42px}.ds-add-block{position:absolute;left:12px;top:16px;width:26px;height:26px;border:0;border-radius:3px;background:transparent;color:#b9bcc2;font-size:22px;cursor:pointer}.ds-add-block:hover{background:#f1f1f1;color:#60646c}.ds-insert-menu{width:256px;max-width:calc(100vw - 28px);max-height:280px;overflow-y:auto;padding:4px;border:1px solid #ececec;border-radius:5px;background:#fff;box-shadow:0 3px 12px rgb(0 0 0 / 15%);scrollbar-width:thin}.ds-insert-menu p{margin:0;padding:6px 7px 3px;color:#34363a;font-size:10px;line-height:16px;font-weight:500}.ds-insert-menu button{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:4px 6px;border:0;border-radius:3px;background:#fff;color:#17181a;text-align:left;font:600 13px/19px 'Microsoft YaHei UI',sans-serif;cursor:pointer}.ds-insert-menu button:hover,.ds-insert-menu button:active{background:#efefef}.ds-insert-menu svg{width:20px;height:20px;margin:4px;color:#1677ff;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}.ds-insert-menu small{display:block;color:#44474c;font-size:10px;line-height:14px;font-weight:400}.ds-description button:focus-visible{outline:2px solid #1677ff;outline-offset:2px}.ds-media-layout input:focus-visible+.ds-switch-track{outline:2px solid #1677ff;outline-offset:3px}@media(max-width:480px){.ds-description header{padding-inline:12px}.ds-description-body{padding-right:16px}}"
+    },
+    {
+      "name": "逐行批量输入",
+      "kind": "custom",
+      "description": "每行独立命名并选择模板，上方提供逐项添加、按数量添加和删除所选行；表格两列平分可用宽度。预览中的名称不是内置模板。",
+      "html": "<div class=\"ds-batch\"><div class=\"ds-batch-actions\"><button>+ 添加任务</button><span></span><label>数量 <input aria-label=\"数量\" type=\"number\" min=\"1\" max=\"5000\" value=\"1\"></label><button>按数量添加</button><button>删除所选行</button></div><table><thead><tr><th>主任务名称（每行单独填写）</th><th>使用模板</th></tr></thead><tbody><tr><td><input aria-label=\"第 1 项主任务名称\" value=\"示例任务\"></td><td><select aria-label=\"第 1 项模板\"><option>请选择模板</option></select></td></tr></tbody></table></div>",
+      "css": ".ds-batch{font:10pt \"Microsoft YaHei UI\";color:#253440}.ds-batch-actions{display:flex;align-items:center;gap:8px;margin-bottom:12px}.ds-batch-actions>span{flex:1}.ds-batch button{font:inherit;background:#fff;color:#253440;border:1px solid #b9c6cd;border-radius:5px;padding:7px 14px}.ds-batch button:hover{background:#edf3f5;border-color:#728d98}.ds-batch button:active{background:#dce9ed}.ds-batch input,.ds-batch select{font:inherit;color:#253440;border:1px solid #bdcad1;border-radius:4px;background:#fff;padding:7px 9px}.ds-batch input[type=number]{width:72px}.ds-batch table{width:100%;table-layout:fixed;border-collapse:collapse;background:#fff}.ds-batch th{font-weight:400;text-align:left;background:#f4f6f8}.ds-batch th,.ds-batch td{padding:6px;border:1px solid #bdcad1}.ds-batch td input,.ds-batch td select{width:100%;min-width:0}.ds-batch button:focus-visible,.ds-batch input:focus-visible,.ds-batch select:focus-visible{outline:2px solid #147788;outline-offset:1px}"
+    },
+    {
+      "name": "任务元数据树",
+      "kind": "custom",
+      "description": "表格树以任务层级为首列并列出归属、人员、状态及日期。三列日期各 160px，横向滚动保留完整时间；其他创建者父任务标为仅展示。静态片段仅示意层级与列宽。",
+      "html": "<div class=\"ds-task-scroll\" tabindex=\"0\" aria-label=\"任务元数据横向滚动区\"><table class=\"ds-tasks\"><thead><tr><th>任务 / 层级</th><th>任务组</th><th>项目</th><th>创建时间</th><th>截止时间</th><th>更新时间</th></tr></thead><tbody><tr><td>▾ 示例父任务（父任务，仅展示）</td><td>示例任务组</td><td>示例项目</td><td>2026-11-04 09:30</td><td>—</td><td>2026-11-04 10:15</td></tr><tr><td class=\"ds-task-child\">示例任务</td><td>示例任务组</td><td>示例项目</td><td>2026-11-04 09:45</td><td>2026-11-06 18:00</td><td>2026-11-04 10:20</td></tr></tbody></table></div>",
+      "css": ".ds-task-scroll{overflow-x:auto;border:1px solid #bdcad1;border-radius:4px;background:#fff}.ds-task-scroll:focus-visible{outline:2px solid #147788;outline-offset:1px}.ds-tasks{font:10pt \"Microsoft YaHei UI\";color:#253440;border-collapse:collapse;white-space:nowrap}.ds-tasks th{font-weight:400;background:#f4f6f8;text-align:left}.ds-tasks th,.ds-tasks td{padding:7px 4px;min-height:22px}.ds-tasks th:first-child{min-width:290px}.ds-tasks th:nth-child(2){min-width:130px}.ds-tasks th:nth-child(3){min-width:110px}.ds-tasks th:nth-child(n+4){min-width:160px}.ds-tasks .ds-task-child{padding-left:28px}"
+    },
+    {
+      "name": "紧凑附件区",
+      "kind": "custom",
+      "description": "空附件状态只保留标题和明确操作，列表不占高度；有文件时展示文件名和大小，列表高 45–90px。模板创建与任务更新使用各自上传动作说明。",
+      "html": "<div class=\"ds-attachments\"><div class=\"ds-attachment-actions\"><span>附件</span><button>添加附件</button><button>移除所选</button></div><p>已保存本地副本。保存更新时上传。</p></div>",
+      "css": ".ds-attachments{font:10pt \"Microsoft YaHei UI\";color:#253440}.ds-attachment-actions{display:flex;align-items:center;gap:8px}.ds-attachment-actions span{flex:1}.ds-attachment-actions button{font:inherit;background:#fff;color:#253440;border:1px solid #b9c6cd;border-radius:5px;padding:7px 14px}.ds-attachment-actions button:hover{background:#edf3f5;border-color:#728d98}.ds-attachment-actions button:active{background:#dce9ed}.ds-attachment-actions button:focus-visible{outline:2px solid #147788;outline-offset:1px}.ds-attachments p{color:#566875;margin:10px 0 0}"
+    },
+    {
+      "name": "负责人选择器",
+      "kind": "custom",
+      "refersTo": "assignee-popup",
+      "description": "模板节点和任务编辑共用的原生弹层。搜索支持姓名、部门、成员分组及拼音；全部、按部门、按分组三种范围配合明确空态。真实头像异步加载，缺失时显示首字；常用是按账号与项目隔离的最近 10 次不同人员选择。上下键移动、Enter 选择、Escape 关闭。搜索框圆角 7px，范围标签外框圆角 16px、边框色 #d8dfe3，均为该弹层沿用 DAPD 参考的局部样式。片段仅展示全部视图与首字头像，不代表真实人员。",
+      "html": "<div class=\"ds-assignee\"><input class=\"ds-assignee-search\" aria-label=\"搜索负责人\" placeholder=\"搜索用户…\"><div class=\"ds-assignee-tabs\" aria-label=\"人员范围\"><button aria-pressed=\"true\">全部</button><button aria-pressed=\"false\">按部门</button><button aria-pressed=\"false\">按分组</button></div><div class=\"ds-assignee-list\" role=\"listbox\" aria-label=\"可选负责人\"><button role=\"option\" aria-selected=\"false\"><svg class=\"ds-assignee-mark\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"7.5\" r=\"3.5\"/><path d=\"M5 20C5 10 19 10 19 20\"/></svg><span>无负责人</span></button><p>当前 1</p><button role=\"option\" aria-selected=\"true\"><span class=\"ds-assignee-avatar\" aria-hidden=\"true\">示</span><span>示例成员</span><span class=\"ds-assignee-dept\">研发部</span><svg class=\"ds-assignee-check\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12l5 5L20 7\"/></svg></button><p>常用 1</p><button role=\"option\" aria-selected=\"false\"><span class=\"ds-assignee-avatar\" aria-hidden=\"true\">另</span><span>另一位成员</span><span class=\"ds-assignee-dept\">策划部</span></button><p>全部 2</p><button role=\"option\" aria-selected=\"true\"><span class=\"ds-assignee-avatar\" aria-hidden=\"true\">示</span><span>示例成员</span><span class=\"ds-assignee-dept\">研发部</span><svg class=\"ds-assignee-check\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12l5 5L20 7\"/></svg></button><button role=\"option\" aria-selected=\"false\"><span class=\"ds-assignee-avatar\" aria-hidden=\"true\">另</span><span>另一位成员</span><span class=\"ds-assignee-dept\">策划部</span></button></div><div class=\"ds-assignee-scope\">示例项目</div></div>",
+      "css": ".ds-assignee{font:10pt \"Microsoft YaHei UI\";color:#253440;background:#fff;border:1px solid #bdcad1;border-radius:8px;padding:12px 12px 10px;width:334px;min-height:496px;display:flex;flex-direction:column;gap:9px}.ds-assignee-search{font:inherit;color:#253440;background:#fff;border:1px solid #bdcad1;border-radius:7px;padding:6px 9px;min-height:20px}.ds-assignee-search::placeholder{color:#566875;opacity:1}.ds-assignee-search:focus-visible{border-color:#147788;outline:none}.ds-assignee-tabs{display:flex;gap:2px;padding:3px;border:1px solid #d8dfe3;border-radius:16px}.ds-assignee-tabs button{font:inherit;flex:1;border:0;border-radius:13px;background:transparent;color:#566875;padding:4px 8px;min-height:20px}.ds-assignee-tabs button[aria-pressed=true]{background:#252525;color:#fff}.ds-assignee-tabs button:hover{background:#edf3f5;color:#253440}.ds-assignee-tabs button[aria-pressed=true]:hover{background:#252525;color:#fff}.ds-assignee-tabs button:focus-visible{outline:2px solid #147788;outline-offset:-2px}.ds-assignee-list{flex:1}.ds-assignee-list p{font-size:9pt;font-weight:700;color:#566875;height:30px;display:flex;align-items:center;margin:0;padding:0 13px}.ds-assignee-list button{font:inherit;display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 13px;border:0;border-radius:6px;background:#fff;color:#253440;text-align:left}.ds-assignee-list button[aria-selected=true]{background:#f4f6f8}.ds-assignee-list button:hover,.ds-assignee-list button:active{background:#edf3f5}.ds-assignee-list button:focus-visible{background:#edf3f5;outline:1px solid #147788;outline-offset:-2px}.ds-assignee-avatar{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#e7f1f4;color:#226274;font-size:12px;font-weight:700;flex:none}.ds-assignee-dept{margin-left:auto;color:#566875}.ds-assignee-mark,.ds-assignee-check{fill:none;stroke:#168bd2;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}.ds-assignee-mark{width:24px;height:24px}.ds-assignee-check{width:16px;height:16px}.ds-assignee-scope{color:#566875}"
     }
   ],
   "narrative": {
     "northStar": "浅色原生任务工作台",
-    "overview": "范围仅为独立 DAPD 工具，依据 `dapd_tool/ui.py`、`updates_ui.py`、`content_editor.py` 与 `media.py` 的当前实现记录。用户已确认 Python + PySide6 的原生 Windows Qt Widgets 方案；以浅色、系统中文字体和直接操作支撑办公屏幕中的高频任务管理。模板主任务与各级子任务均支持固定描述、内嵌图片和附件。\n\n采用 Operate 模式，标准 Qt 控件与 Fusion 样式。DESIGN_VARIANCE=3，MOTION_INTENSITY=1，VISUAL_DENSITY=5。无装饰图片、无自定义动画。方向脚本已运行（91dbc398）；视觉方向由已确认的原生工具方案与既有桌面风格约束。网页检测器不适用于此界面。",
+    "overview": "范围仅为独立 DAPD 工具，依据 `dapd_tool/ui/main_window.py`、`ui/pages/`、`ui/dialogs/`、`ui/widgets/` 与 `editor/src` 的当前实现记录。用户已确认 Python + PySide6 的 Windows Qt Widgets 方案；以浅色、系统中文字体和直接操作支撑办公屏幕中的高频任务管理。模板主任务与各级子任务均可配置默认负责人、富文本描述、内嵌图片和附件。模板与已有任务共用支持头像、搜索和组织范围切换的原生负责人选择器。\n\n采用 Operate 模式，窗口、表单与列表使用标准 Qt 控件和 Fusion 样式；描述区嵌入本地打包的 BlockNote 编辑器，沿用桌面字体，并按用户提供的 DAPD 截图复现白色画布、行首添加和选区格式浮层。编辑器的局部配色不改变桌面青绿主色。DESIGN_VARIANCE=3，MOTION_INTENSITY=1，VISUAL_DENSITY=5。无装饰图片、无自定义动画。保留已确认的原生工具视觉方向（方向脚本记录：91dbc398）。",
     "keyCharacteristics": [
       "浅灰背景、白色操作区与单一青绿主色。",
       "标准原生控件、清楚的文字状态和可见键盘焦点。",
       "中等信息密度、可调分栏和可伸展内容区。",
+      "富文本格式状态、任务层级与时间信息直接可见。",
       "必要说明常显，所有悬停文字说明均禁用。"
     ],
     "rules": [
@@ -334,7 +493,9 @@
     ],
     "dos": [
       "**Do** 保持可见键盘焦点、明确的任务归属、真实进度与先预览后提交的操作顺序。",
-      "**Do** 让说明直接显示在界面中，错误恢复入口与相关记录放在一起。"
+      "**Do** 让说明直接显示在界面中，错误恢复入口与相关记录放在一起。",
+      "**Do** 保持选区格式浮层与所选文字格式同步，描述区的添加和格式操作按需展开；区分模板的“默认负责人”和已有任务的“负责人”，让上传说明对应“创建”或“保存更新”。",
+      "**Do** 在负责人选择器中常显人员范围，搜索与组织筛选保持同一范围；头像与姓名一起展示，空态说明当前范围的实际结果。"
     ],
     "donts": [
       "**Don't** 添加默认任务模板、装饰图片、网页视觉套路或悬停文字说明。",

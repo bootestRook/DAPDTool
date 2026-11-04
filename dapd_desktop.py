@@ -11,7 +11,9 @@ from PySide6.QtWidgets import QApplication
 from dapd_tool import VERSION
 from dapd_tool.storage import Store
 from dapd_tool.instance import acquire_instance_lock
-from dapd_tool.ui import MainWindow, configure_app, message
+from dapd_tool.ui.main_window import MainWindow
+from dapd_tool.ui.theme import configure_app
+from dapd_tool.ui.controls import message
 
 
 def main():

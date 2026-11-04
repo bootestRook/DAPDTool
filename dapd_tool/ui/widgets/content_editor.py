@@ -6,7 +6,7 @@ from .rich_editor import RichEditor
 from .assignee_picker import AssigneePicker
 from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 
-from .media import Assets, empty_content, validate_content, description_assets, description_html
+from ...media import Assets, empty_content, validate_content, description_assets, description_html
 
 
 class ContentEditor(QWidget):

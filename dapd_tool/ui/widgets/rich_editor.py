@@ -44,7 +44,7 @@ class Bridge(QObject):
         try:
             if len(data) > 70_000_000:
                 raise ValueError("文件超过 50 MB。")
-            from .media import IMAGE_EXTENSIONS
+            from ...media import IMAGE_EXTENSIONS
             raw = base64.b64decode(data, validate=True)
             suffix = Path(name).suffix.lower()
             if suffix in IMAGE_EXTENSIONS:
@@ -98,7 +98,7 @@ class RichEditor(QWebEngineView):
         self.bridge = Bridge(self)
         self.channel.registerObject("bridge", self.bridge)
         self.page().setWebChannel(self.channel)
-        self.setUrl(QUrl.fromLocalFile(str(Path(__file__).parent / "editor_dist" / "index.html")))
+        self.setUrl(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[2] / "editor_dist" / "index.html")))
         self.setMinimumHeight(200)
 
     def wait_ready(self):

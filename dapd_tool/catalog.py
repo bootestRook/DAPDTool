@@ -45,3 +45,11 @@ def locate_group(api, identifier):
                     raise ValueError("这个任务组已经归档，请选择其他任务组。")
                 return {"projects": projects, "project": project, "groups": groups, "group": group}
     raise ValueError("当前账号无法访问这个任务组，请检查链接和 API Key 的项目权限。")
+
+
+def locate_project(api, identifier):
+    projects = api.projects()
+    project = next((project for project in projects if project["id"] == identifier), None)
+    if project is None:
+        raise ValueError("当前账号无法访问这个项目，请检查链接或项目权限。")
+    return {"projects": projects, "project": project, "groups": api.groups(identifier)}

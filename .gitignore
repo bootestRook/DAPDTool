@@ -2,6 +2,10 @@
 .tools/
 build-desktop/
 release/
+/dist/
+*.zip
+*.nupkg
+*.exe
 work/
 .impeccable/review/
 __pycache__/

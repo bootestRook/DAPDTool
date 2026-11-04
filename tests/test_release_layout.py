@@ -66,6 +66,15 @@ class ReleaseLayoutTests(unittest.TestCase):
             build_desktop.remove_output(outside, self.release)
         self.assertTrue(outside.is_file())
 
+    def test_source_archive_includes_nested_ui_checks_and_test_fixtures(self):
+        files = {path.relative_to(build_desktop.ROOT).as_posix() for path in build_desktop.collect_sources(build_desktop.ROOT)}
+        required = {"dapd_tool/ui/main_window.py", "dapd_tool/ui/pages/create.py",
+                    "dapd_tool/ui/dialogs/template.py", "dapd_tool/ui/widgets/rich_editor.py",
+                    "tests/creation_fixture.py", "tests/qt_fixture.py", "scripts/check_structure.py", "AGENTS.md"}
+        self.assertTrue(required <= files, required - files)
+        self.assertNotIn("dapd_tool/ui.py", files)
+        self.assertFalse(any("credential.bin" in path or "node_modules" in path for path in files))
+
     def test_publisher_reads_update_artifacts_from_build_and_publishes_portable_zip(self):
         package = self.release / self.name
         package.mkdir()
