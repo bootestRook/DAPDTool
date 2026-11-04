@@ -2,44 +2,50 @@
   "schema": 1,
   "releases": [
     {
-      "tag_name": "v1.1.0",
-      "body": "# DAPD 任务工具 1.1.0\n\n- 增加“更新与共享”：自动检查公开 GitHub Releases，软件内下载、校验并重启升级。\n- 共享模板、固定描述、图片和附件可独立同步，无需升级整个程序。\n- 共享模板可直接创建任务，复制为个人模板后可自行编辑；同步不覆盖个人修改。\n- 增加共享内容包导出与发布工具，不内置任何默认模板。\n- 采用用户级安装包，程序与个人数据分别保存；创建任务期间禁止重启升级。\n",
+      "tag_name": "v1.2.3",
+      "body": "# DAPD 任务工具 1.2.3\n\n- 按页面、弹窗、公共控件和执行控制拆分桌面界面，统一账号、项目选择及后台任务状态。\n- 增加模块职责与文件规模规则，并在提交检查、本地构建和发布流程中检查导入边界与循环依赖。\n- “我创建的任务”按项目读取和缓存，支持取消读取、层级筛选及高亮本人创建的任务。\n- 更新入口显示可用更新标记；程序下载校验完成后提供 5 秒重启倒计时，也可选择稍后重启。\n- 后台操作未结束时暂停重启倒计时；全部结束后重新计时，避免更新中断任务。\n- 便携包、安装器及更新包仅发布到对应版本的 GitHub Release；客户端通过静态更新索引发现新版本。\n\n# DAPD 任务工具 1.2.2\n\n- 默认交付解压即用的便携 ZIP，根目录双击程序即可打开，无需安装，保留软件内更新。\n- release 只保留最新 ZIP 与同名解压文件夹，安装器和更新发布中间文件独立保存。\n- 交付目录从 ZIP 重新解压生成，避免继承构建目录的低完整性标记而无法写入本地数据。\n- 描述区改为 DAPD 式行首插入菜单、选区浮动格式栏、媒体横排与折叠交互。\n- 单实例控制使用 Windows 内核互斥锁，进程退出后自动释放，不依赖磁盘锁文件。\n\n# DAPD 任务工具 1.2.1\n\n- 模板和任务编辑共用 DAPD 式负责人选择面板，支持姓名、拼音及首字母搜索。\n- 展示真实头像、部门和选中状态，支持部门逐级筛选、项目成员分组及未分组。\n- 保留无负责人、当前、常用和全部；常用记录按账号和项目分别保存。\n\n# DAPD 任务工具 1.2.0\n\n- 修正创建后同级任务顺序与预览相反的问题。\n- 模板各级任务支持默认负责人、BlockNote 富文本及直接粘贴图片。\n- 新增包含图片和附件的模板文件导入导出，保留旧模板读取。\n- 批量创建支持按数量添加，每项独立命名并选择模板。\n- 新增“我创建的任务”：分页读取、父子树、筛选、字段编辑和保存回读。\n\n# DAPD 任务工具 1.1.0\n\n- 增加“更新与共享”：自动检查公开 GitHub Releases，软件内下载、校验并重启升级。\n- 共享模板、固定描述、图片和附件可独立同步，无需升级整个程序。\n- 共享模板可直接创建任务，复制为个人模板后可自行编辑；同步不覆盖个人修改。\n- 增加共享内容包导出与发布工具，不内置任何默认模板。\n- 采用用户级安装包，程序与个人数据分别保存；创建任务期间禁止重启升级。\n",
       "assets": [
         {
           "name": "build-info.json",
-          "size": 1747,
-          "digest": "sha256:7425c2a306bbb1f2048975fc65e7c5cba9fe07141e9d1bd6277bdad2cdfd586a",
-          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/build-info.json"
+          "size": 1812,
+          "digest": "sha256:ba60a6b3fb9ce83202786c73d21798a57ce5c14961b0a79121d707bf29ad5966",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.2.3/build-info.json"
         },
         {
-          "name": "DAPDTool.Desktop-1.1.0-full.nupkg",
-          "size": 51583449,
-          "digest": "sha256:7ae2f04b07ac84f9e293d984e9a01b91d8360263d7903966cecec305539e8116",
-          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/DAPDTool.Desktop-1.1.0-full.nupkg"
+          "name": "DAPD.-1.2.3-Windows-x64.zip",
+          "size": 235180343,
+          "digest": "sha256:2c69a89276c7a2e25030786b38f1540a5e80fb103e446ac901c772f9f1d15aff",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.2.3/DAPD.-1.2.3-Windows-x64.zip"
+        },
+        {
+          "name": "DAPDTool.Desktop-1.2.3-full.nupkg",
+          "size": 239369680,
+          "digest": "sha256:008d2c354a16ffdd47c24610effeac0fd232eab49e59cd866d776ee96e9b5084",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.2.3/DAPDTool.Desktop-1.2.3-full.nupkg"
         },
         {
           "name": "DAPDTool.Desktop-win-Portable.zip",
-          "size": 51579073,
-          "digest": "sha256:6b714cc9093a8c64b289695fd444d27a3bdd1f052436203aa1ad135675b2ffdc",
-          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/DAPDTool.Desktop-win-Portable.zip"
+          "size": 239363968,
+          "digest": "sha256:6b0c95339b04030d96c186b93b8be48fa90faf1ae0cb25f0bb0a319ab8442366",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.2.3/DAPDTool.Desktop-win-Portable.zip"
         },
         {
           "name": "DAPDTool.Desktop-win-Setup.exe",
-          "size": 59114457,
-          "digest": "sha256:8cc02a9b7beacf2d80fb43ea203287f4c8724eb83990ac5dc46c37fcd1a6b4f5",
-          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/DAPDTool.Desktop-win-Setup.exe"
+          "size": 246900688,
+          "digest": "sha256:1858bc9e53f51736327350a5352b8105ee65958f721f8e7b9d9d3ac8bd5fe7e8",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.2.3/DAPDTool.Desktop-win-Setup.exe"
         },
         {
           "name": "releases.win.json",
-          "size": 1415,
-          "digest": "sha256:8b4aa4787b6b9e5d42bc1c97c6129f42f5f21f2b1a753f4983272218ba23a05c",
-          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/releases.win.json"
+          "size": 5935,
+          "digest": "sha256:4957c40f9ac06f0e0f8574f95f949d8a59ac4a828ecc4116a7be332a82283cc8",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.2.3/releases.win.json"
         },
         {
           "name": "SHA256.txt",
-          "size": 24493,
-          "digest": "sha256:ede4fd9e64d74419d7840464cf68d2e122eb489cab3978455fa34f2630b0f7e5",
-          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/SHA256.txt"
+          "size": 445249,
+          "digest": "sha256:15862823ec100afd9b4cd2af2d097c8728d42035d45024b505abdfbc99fec376",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.2.3/SHA256.txt"
         }
       ]
     },
