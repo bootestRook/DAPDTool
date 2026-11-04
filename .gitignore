@@ -1,0 +1,11 @@
+.venv-desktop/
+.tools/
+build-desktop/
+release/
+work/
+.impeccable/review/
+__pycache__/
+*.pyc
+*.sqlite3
+credential.bin
+*.log

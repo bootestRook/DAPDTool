@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-04T00:10:28.180Z",
+  "title": "Design System: DAPD 桌面工具",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "任务青绿",
+        "tonalRamp": [
+          "oklch(15.00% 0.07882 214.05)",
+          "oklch(26.43% 0.07882 214.05)",
+          "oklch(37.86% 0.07882 214.05)",
+          "oklch(49.29% 0.07882 214.05)",
+          "oklch(60.71% 0.07882 214.05)",
+          "oklch(72.14% 0.07882 214.05)",
+          "oklch(83.57% 0.07882 214.05)",
+          "oklch(95.00% 0.07882 214.05)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "深青绿",
+        "tonalRamp": [
+          "oklch(15.00% 0.06987 214.41)",
+          "oklch(26.43% 0.06987 214.41)",
+          "oklch(37.86% 0.06987 214.41)",
+          "oklch(49.29% 0.06987 214.41)",
+          "oklch(60.71% 0.06987 214.41)",
+          "oklch(72.14% 0.06987 214.41)",
+          "oklch(83.57% 0.06987 214.41)",
+          "oklch(95.00% 0.06987 214.41)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "浅灰背景",
+        "tonalRamp": [
+          "oklch(15.00% 0.00342 247.86)",
+          "oklch(26.43% 0.00342 247.86)",
+          "oklch(37.86% 0.00342 247.86)",
+          "oklch(49.29% 0.00342 247.86)",
+          "oklch(60.71% 0.00342 247.86)",
+          "oklch(72.14% 0.00342 247.86)",
+          "oklch(83.57% 0.00342 247.86)",
+          "oklch(95.00% 0.00342 247.86)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "白色操作区",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "深灰正文",
+        "tonalRamp": [
+          "oklch(15.00% 0.02935 242.95)",
+          "oklch(26.43% 0.02935 242.95)",
+          "oklch(37.86% 0.02935 242.95)",
+          "oklch(49.29% 0.02935 242.95)",
+          "oklch(60.71% 0.02935 242.95)",
+          "oklch(72.14% 0.02935 242.95)",
+          "oklch(83.57% 0.02935 242.95)",
+          "oklch(95.00% 0.02935 242.95)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "次要正文",
+        "tonalRamp": [
+          "oklch(15.00% 0.03004 239.58)",
+          "oklch(26.43% 0.03004 239.58)",
+          "oklch(37.86% 0.03004 239.58)",
+          "oklch(49.29% 0.03004 239.58)",
+          "oklch(60.71% 0.03004 239.58)",
+          "oklch(72.14% 0.03004 239.58)",
+          "oklch(83.57% 0.03004 239.58)",
+          "oklch(95.00% 0.03004 239.58)"
+        ]
+      },
+      "heading": {
+        "role": "neutral",
+        "displayName": "深青标题",
+        "tonalRamp": [
+          "oklch(15.00% 0.04782 226.40)",
+          "oklch(26.43% 0.04782 226.40)",
+          "oklch(37.86% 0.04782 226.40)",
+          "oklch(49.29% 0.04782 226.40)",
+          "oklch(60.71% 0.04782 226.40)",
+          "oklch(72.14% 0.04782 226.40)",
+          "oklch(83.57% 0.04782 226.40)",
+          "oklch(95.00% 0.04782 226.40)"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "焦点青绿",
+        "tonalRamp": [
+          "oklch(15.00% 0.08695 212.88)",
+          "oklch(26.43% 0.08695 212.88)",
+          "oklch(37.86% 0.08695 212.88)",
+          "oklch(49.29% 0.08695 212.88)",
+          "oklch(60.71% 0.08695 212.88)",
+          "oklch(72.14% 0.08695 212.88)",
+          "oklch(83.57% 0.08695 212.88)",
+          "oklch(95.00% 0.08695 212.88)"
+        ]
+      },
+      "selection": {
+        "role": "primary",
+        "displayName": "淡青选择",
+        "tonalRamp": [
+          "oklch(15.00% 0.02235 203.69)",
+          "oklch(26.43% 0.02235 203.69)",
+          "oklch(37.86% 0.02235 203.69)",
+          "oklch(49.29% 0.02235 203.69)",
+          "oklch(60.71% 0.02235 203.69)",
+          "oklch(72.14% 0.02235 203.69)",
+          "oklch(83.57% 0.02235 203.69)",
+          "oklch(95.00% 0.02235 203.69)"
+        ]
+      },
+      "input-border": {
+        "role": "neutral",
+        "displayName": "输入边框",
+        "tonalRamp": [
+          "oklch(15.00% 0.01730 230.96)",
+          "oklch(26.43% 0.01730 230.96)",
+          "oklch(37.86% 0.01730 230.96)",
+          "oklch(49.29% 0.01730 230.96)",
+          "oklch(60.71% 0.01730 230.96)",
+          "oklch(72.14% 0.01730 230.96)",
+          "oklch(83.57% 0.01730 230.96)",
+          "oklch(95.00% 0.01730 230.96)"
+        ]
+      },
+      "button-border": {
+        "role": "neutral",
+        "displayName": "按钮边框",
+        "tonalRamp": [
+          "oklch(15.00% 0.01736 230.96)",
+          "oklch(26.43% 0.01736 230.96)",
+          "oklch(37.86% 0.01736 230.96)",
+          "oklch(49.29% 0.01736 230.96)",
+          "oklch(60.71% 0.01736 230.96)",
+          "oklch(72.14% 0.01736 230.96)",
+          "oklch(83.57% 0.01736 230.96)",
+          "oklch(95.00% 0.01736 230.96)"
+        ]
+      },
+      "button-hover": {
+        "role": "neutral",
+        "displayName": "按钮经过背景",
+        "tonalRamp": [
+          "oklch(15.00% 0.00695 219.56)",
+          "oklch(26.43% 0.00695 219.56)",
+          "oklch(37.86% 0.00695 219.56)",
+          "oklch(49.29% 0.00695 219.56)",
+          "oklch(60.71% 0.00695 219.56)",
+          "oklch(72.14% 0.00695 219.56)",
+          "oklch(83.57% 0.00695 219.56)",
+          "oklch(95.00% 0.00695 219.56)"
+        ]
+      },
+      "button-pressed": {
+        "role": "neutral",
+        "displayName": "按钮按下背景",
+        "tonalRamp": [
+          "oklch(15.00% 0.01493 218.05)",
+          "oklch(26.43% 0.01493 218.05)",
+          "oklch(37.86% 0.01493 218.05)",
+          "oklch(49.29% 0.01493 218.05)",
+          "oklch(60.71% 0.01493 218.05)",
+          "oklch(72.14% 0.01493 218.05)",
+          "oklch(83.57% 0.01493 218.05)",
+          "oklch(95.00% 0.01493 218.05)"
+        ]
+      },
+      "notice-background": {
+        "role": "neutral",
+        "displayName": "常显说明背景",
+        "tonalRamp": [
+          "oklch(15.00% 0.00967 204.91)",
+          "oklch(26.43% 0.00967 204.91)",
+          "oklch(37.86% 0.00967 204.91)",
+          "oklch(49.29% 0.00967 204.91)",
+          "oklch(60.71% 0.00967 204.91)",
+          "oklch(72.14% 0.00967 204.91)",
+          "oklch(83.57% 0.00967 204.91)",
+          "oklch(95.00% 0.00967 204.91)"
+        ]
+      },
+      "notice-text": {
+        "role": "neutral",
+        "displayName": "常显说明文字",
+        "tonalRamp": [
+          "oklch(15.00% 0.04953 215.35)",
+          "oklch(26.43% 0.04953 215.35)",
+          "oklch(37.86% 0.04953 215.35)",
+          "oklch(49.29% 0.04953 215.35)",
+          "oklch(60.71% 0.04953 215.35)",
+          "oklch(72.14% 0.04953 215.35)",
+          "oklch(83.57% 0.04953 215.35)",
+          "oklch(95.00% 0.04953 215.35)"
+        ]
+      },
+      "disabled-background": {
+        "role": "neutral",
+        "displayName": "禁用背景",
+        "tonalRamp": [
+          "oklch(15.00% 0.00420 236.50)",
+          "oklch(26.43% 0.00420 236.50)",
+          "oklch(37.86% 0.00420 236.50)",
+          "oklch(49.29% 0.00420 236.50)",
+          "oklch(60.71% 0.00420 236.50)",
+          "oklch(72.14% 0.00420 236.50)",
+          "oklch(83.57% 0.00420 236.50)",
+          "oklch(95.00% 0.00420 236.50)"
+        ]
+      },
+      "disabled-text": {
+        "role": "neutral",
+        "displayName": "禁用文字",
+        "tonalRamp": [
+          "oklch(15.00% 0.02041 232.73)",
+          "oklch(26.43% 0.02041 232.73)",
+          "oklch(37.86% 0.02041 232.73)",
+          "oklch(49.29% 0.02041 232.73)",
+          "oklch(60.71% 0.02041 232.73)",
+          "oklch(72.14% 0.02041 232.73)",
+          "oklch(83.57% 0.02041 232.73)",
+          "oklch(95.00% 0.02041 232.73)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "页面主标题",
+        "purpose": "主窗口顶部标题。"
+      },
+      "title": {
+        "displayName": "区域标题",
+        "purpose": "任务输入区和程序、共享内容区域标题。"
+      },
+      "body": {
+        "displayName": "操作与正文",
+        "purpose": "按钮、输入、列表和常显说明。"
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "主要按钮",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "预览、导出、程序下载或明确确认动作；原生 Qt 状态的静态 HTML 预览。",
+      "html": "<button class=\"ds-primary\">下载程序更新</button>",
+      "css": ".ds-primary{font-family:'Microsoft YaHei UI';font-size:10pt;background:#146979;color:#fff;border:1px solid #146979;border-radius:5px;padding:7px 14px;min-height:20px;font-weight:600}.ds-primary:hover{background:#0f5866}.ds-primary:focus-visible{border:2px solid #147788;padding:6px 13px;outline:none}.ds-primary:disabled{background:#90afb5;border-color:#90afb5;color:#f5f8f9}"
+    },
+    {
+      "name": "次要按钮",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "检查更新、同步内容和其他清楚命名的常规操作。",
+      "html": "<button class=\"ds-secondary\">检查更新</button>",
+      "css": ".ds-secondary{font-family:'Microsoft YaHei UI';font-size:10pt;background:#fff;color:#253440;border:1px solid #b9c6cd;border-radius:5px;padding:7px 14px;min-height:20px}.ds-secondary:hover{background:#edf3f5;border-color:#728d98}.ds-secondary:active{background:#dce9ed}.ds-secondary:focus-visible{border:2px solid #147788;padding:6px 13px;outline:none}.ds-secondary:disabled{background:#edf0f2;color:#78868e;border-color:#d3dce0}"
+    },
+    {
+      "name": "单行输入",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "版本、标题等有常显标签的输入；占位文字使用不透明次要正文色。",
+      "html": "<label class=\"ds-field-label\">内容版本<input class=\"ds-field\" placeholder=\"例如 1.0.0，每次发布递增\"></label>",
+      "css": ".ds-field-label{font-family:'Microsoft YaHei UI';font-size:10pt;color:#253440;display:flex;align-items:center;gap:20px}.ds-field{font-family:'Microsoft YaHei UI';font-size:10pt;background:#fff;color:#253440;border:1px solid #bdcad1;border-radius:4px;padding:7px 9px;min-height:20px}.ds-field::placeholder{color:#566875;opacity:1}.ds-field:focus-visible{border-color:#147788;outline:none}.ds-field:disabled{color:#78868e;background:#edf0f2}.ds-field::selection{background:#d8edef;color:#183c4a}"
+    },
+    {
+      "name": "四页导航",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "固定四个标签，选中状态使用青绿下划线；更新提示属于标签文字。",
+      "html": "<nav class=\"ds-nav\" aria-label=\"功能页\"><button>创建任务</button><button>我的模板</button><button>创建记录</button><button aria-current=\"page\">更新与共享</button></nav>",
+      "css": ".ds-nav{display:flex;background:#f4f6f8}.ds-nav button{font-family:'Microsoft YaHei UI';font-size:10pt;background:transparent;color:#566875;border:0;border-bottom:2px solid transparent;padding:12px 25px}.ds-nav button[aria-current]{color:#125d6c;border-bottom-color:#146979;font-weight:600}.ds-nav button:focus-visible{background:#e2edf0;outline:none}"
+    },
+    {
+      "name": "常显说明",
+      "kind": "custom",
+      "refersTo": "notice",
+      "description": "空模板指引与公开分发说明直接展示；不是悬停提示。",
+      "html": "<div class=\"ds-notice\">勾选要发布的个人模板。导出包包含对应描述、图片和附件；上传公开仓库后任何人都可下载。</div>",
+      "css": ".ds-notice{font-family:'Microsoft YaHei UI';font-size:10pt;background:#e9f2f3;color:#244e58;border-radius:6px;padding:12px;white-space:normal}"
+    },
+    {
+      "name": "共享模板条目",
+      "kind": "custom",
+      "refersTo": "list-selection",
+      "description": "来源前缀、子任务数和内容版本直接显示；示例只用于设计预览，不是默认模板。",
+      "html": "<div class=\"ds-template-list\" role=\"listbox\" aria-label=\"模板列表\" tabindex=\"0\"><div role=\"option\" aria-selected=\"true\">共享 · 模板名称<br>4 个子任务 · v1.0.0</div></div>",
+      "css": ".ds-template-list{font-family:'Microsoft YaHei UI';font-size:10pt;background:#fff;color:#253440;border:1px solid #bdcad1;border-radius:4px}.ds-template-list:focus-visible{border-color:#147788;outline:none}.ds-template-list [role=option]{padding:7px 4px;min-height:22px}.ds-template-list [aria-selected=true]{background:#d8edef;color:#183c4a}"
+    }
+  ],
+  "narrative": {
+    "northStar": "浅色原生任务工作台",
+    "overview": "范围仅为独立 DAPD 工具，依据 `dapd_tool/ui.py`、`updates_ui.py`、`content_editor.py` 与 `media.py` 的当前实现记录。用户已确认 Python + PySide6 的原生 Windows Qt Widgets 方案；以浅色、系统中文字体和直接操作支撑办公屏幕中的高频任务管理。模板主任务与各级子任务均支持固定描述、内嵌图片和附件。\n\n采用 Operate 模式，标准 Qt 控件与 Fusion 样式。DESIGN_VARIANCE=3，MOTION_INTENSITY=1，VISUAL_DENSITY=5。无装饰图片、无自定义动画。方向脚本已运行（91dbc398）；视觉方向由已确认的原生工具方案与既有桌面风格约束。网页检测器不适用于此界面。",
+    "keyCharacteristics": [
+      "浅灰背景、白色操作区与单一青绿主色。",
+      "标准原生控件、清楚的文字状态和可见键盘焦点。",
+      "中等信息密度、可调分栏和可伸展内容区。",
+      "必要说明常显，所有悬停文字说明均禁用。"
+    ],
+    "rules": [
+      {
+        "name": "The Visible Status Rule",
+        "body": "状态必须使用具体文字说明；颜色、进度条和标签下划线只提供辅助识别。",
+        "section": "colors"
+      },
+      {
+        "name": "The Action Matches State Rule",
+        "body": "按钮可用状态、动作名称与紧邻说明必须同步；操作结束后不得保留仍需等待的文字。",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** 保持可见键盘焦点、明确的任务归属、真实进度与先预览后提交的操作顺序。",
+      "**Do** 让说明直接显示在界面中，错误恢复入口与相关记录放在一起。"
+    ],
+    "donts": [
+      "**Don't** 添加默认任务模板、装饰图片、网页视觉套路或悬停文字说明。",
+      "**Don't** 将本文件的界面约定扩展到原有飞书控制器。"
+    ]
+  }
+}
