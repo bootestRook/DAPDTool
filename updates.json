@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "releases": [
+    {
+      "tag_name": "content-v1.0.0",
+      "body": "共享内容库初始化。当前不含预设模板，后续通过内容新版发布模板、描述、图片和附件。",
+      "assets": [
+        {
+          "name": "dapd-content-1.0.0.zip",
+          "size": 307,
+          "digest": "sha256:bf016e435732b89347028f15b68a7bd21b38187762dec78615a504597016c39e",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/content-v1.0.0/dapd-content-1.0.0.zip"
+        }
+      ]
+    }
+  ]
+}
