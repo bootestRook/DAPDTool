@@ -15,7 +15,7 @@ from dapd_tool.content_packs import export_pack, install_pack, load_shared, all_
 from dapd_tool.media import Assets
 from dapd_tool.storage import Store
 from dapd_tool.updates import ReleaseClient, REPO_URL, INDEX_URL, choose_releases, ProgramUpdater, version_tuple
-from publish_release import update_index
+from publish_release import update_index, publish
 
 
 def release(version, content=False, data=b'package'):
@@ -106,6 +106,33 @@ class ReleaseTests(unittest.TestCase):
             self.assertIs(updater.ready, info)
             updater.launch_update()
         manager.wait_exit_then_apply_updates.assert_called_once_with(info, silent=False, restart=True)
+
+
+class PublisherTests(unittest.TestCase):
+    def test_resume_draft_verifies_existing_asset_before_activation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            paths = [Path(directory) / name for name in ('one.bin', 'two.bin')]
+            for p in paths: p.write_bytes(p.name.encode())
+            def asset(p):
+                return {'name': p.name, 'size': p.stat().st_size, 'digest': 'sha256:' + hashlib.sha256(p.read_bytes()).hexdigest()}
+            draft = {'id': 123, 'tag_name': 'v1.2.0', 'draft': True, 'assets': [asset(paths[0])]}
+            uploaded, activated = [], []
+            def handler(request):
+                if request.method == 'GET':
+                    return httpx.Response(404) if '/tags/' in request.url.path else httpx.Response(200, json=[draft])
+                if request.method == 'POST':
+                    uploaded.append(request.url.params['name'])
+                    self.assertEqual(request.content, paths[1].read_bytes())
+                    return httpx.Response(201, json=asset(paths[1]))
+                payload = json.loads(request.content)
+                if payload.get('draft') is False: activated.append(True)
+                return httpx.Response(200, json={**draft, 'html_url': 'https://github.com/bootestRook/DAPDTool/releases/tag/v1.2.0'})
+            client = httpx.Client(transport=httpx.MockTransport(handler))
+            with patch('publish_release.httpx.Client', return_value=client), patch('publish_release.credential', return_value='fixture'), patch('publish_release.update_index') as index, patch('builtins.print'):
+                publish('v1.2.0', 'Test', '', paths, latest=True, direct=True)
+                index.assert_called_once()
+            self.assertEqual(uploaded, ['two.bin'])
+            self.assertEqual(activated, [True])
 
 
 class PackTests(unittest.TestCase):

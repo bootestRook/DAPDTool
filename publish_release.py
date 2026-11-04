@@ -65,28 +65,47 @@ def update_index(client, release):
     print("软件更新索引已激活：" + tag, flush=True)
 
 
-def publish(tag, title, notes, paths, *, latest):
+def publish(tag, title, notes, paths, *, latest, direct=False):
     with httpx.Client(headers={"Authorization": "Bearer " + credential(), "Accept": "application/vnd.github+json",
-                               "User-Agent": "DAPDTool-Publisher"}, timeout=180) as client:
+                               "User-Agent": "DAPDTool-Publisher"}, timeout=300, trust_env=not direct) as client:
         existing = client.get(API_URL + "/releases/tags/" + tag)
         if existing.status_code != 404:
             if existing.status_code == 200:
                 raise ValueError("此版本已经存在，请递增版本号。不会覆盖已发布的文件。")
             raise ValueError(f"无法检查仓库访问权限（HTTP {existing.status_code}）。")
-        response = client.post(API_URL + "/releases", json={"tag_name": tag, "name": title, "body": notes,
-                                                             "draft": True, "make_latest": "false"})
-        if response.status_code != 201:
-            raise ValueError(f"创建发布草稿失败（HTTP {response.status_code}），请检查仓库写入权限。")
-        release = response.json()
+        # GitHub's tag endpoint excludes drafts. Resume a recent matching draft
+        # after interrupted uploads, verifying every existing asset before reuse.
+        response = client.get(API_URL + "/releases", params={"per_page": 100})
+        response.raise_for_status()
+        drafts = [r for r in response.json() if r["tag_name"] == tag and r["draft"]]
+        if len(drafts) > 1:
+            raise ValueError("同一版本有多个发布草稿，请在 GitHub 保留一个后重试。")
+        if drafts:
+            release = drafts[0]
+            response = client.patch(API_URL + f"/releases/{release['id']}", json={"name": title, "body": notes})
+            response.raise_for_status()
+        else:
+            response = client.post(API_URL + "/releases", json={"tag_name": tag, "name": title, "body": notes,
+                                                                 "draft": True, "make_latest": "false"})
+            if response.status_code != 201:
+                raise ValueError(f"创建发布草稿失败（HTTP {response.status_code}），请检查仓库写入权限。")
+            release = response.json()
+        existing_assets = {a["name"]: a for a in release["assets"]}
         try:
             for path in paths:
                 digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                saved = existing_assets.get(path.name)
+                if saved:
+                    if saved.get("digest") != "sha256:" + digest or saved.get("size") != path.stat().st_size:
+                        raise ValueError(f"草稿中 {path.name} 与本地不同，请核对并移除该草稿文件后重试。")
+                    print("已核对，继续使用草稿文件：" + path.name, flush=True)
+                    continue
                 with path.open("rb") as source:
                     uploaded = client.post(f"https://uploads.github.com/repos/{REPOSITORY}/releases/{release['id']}/assets",
-                                           params={"name": path.name}, content=source,
+                                           params={"name": path.name}, content=iter(lambda: source.read(256 * 1024), b""),
                                            headers={"Content-Type": "application/octet-stream", "Content-Length": str(path.stat().st_size)})
                 if uploaded.status_code != 201 or uploaded.json().get("digest") != "sha256:" + digest:
-                    raise ValueError(f"上传或校验 {path.name} 失败，草稿保留，未向用户发布。")
+                    raise ValueError(f"上传或校验 {path.name} 失败（HTTP {uploaded.status_code}），草稿保留。可原命令重试；代理导致超时可添加 --direct 直连。")
                 print("已上传并校验：" + path.name, flush=True)
             response = client.patch(API_URL + f"/releases/{release['id']}", json={"draft": False, "make_latest": "true" if latest else "false"})
             if response.status_code != 200:
@@ -100,6 +119,7 @@ def publish(tag, title, notes, paths, *, latest):
 
 def main():
     parser = argparse.ArgumentParser(description="向 bootestRook/DAPDTool 发布程序或共享内容")
+    parser.add_argument("--direct", action="store_true", help="直接连接 GitHub，不使用环境变量中的代理")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("app", help="发布 build_desktop.py 生成的当前程序版本")
     content = commands.add_parser("content", help="发布软件导出的共享内容 ZIP")
@@ -108,7 +128,7 @@ def main():
     index.add_argument("tag")
     args = parser.parse_args()
     if args.command == "index":
-        with httpx.Client(headers={"Authorization": "Bearer " + credential(), "Accept": "application/vnd.github+json"}, timeout=30) as client:
+        with httpx.Client(headers={"Authorization": "Bearer " + credential(), "Accept": "application/vnd.github+json"}, timeout=30, trust_env=not args.direct) as client:
             response = client.get(API_URL + "/releases/tags/" + args.tag)
             if response.status_code != 200:
                 raise ValueError("找不到指定的正式发布，请检查标签。")
@@ -129,7 +149,7 @@ def main():
             if package.stat().st_size != asset["Size"] or hashlib.sha256(package.read_bytes()).hexdigest().lower() != asset["SHA256"].lower():
                 raise ValueError("更新包与清单校验值不一致，请重新构建。")
         paths.extend(ROOT / "release" / name for name in ("build-info.json", "SHA256.txt"))
-        publish("v" + VERSION, "DAPD 任务工具 " + VERSION, (ROOT / "RELEASE-NOTES.md").read_text(encoding="utf-8"), paths, latest=True)
+        publish("v" + VERSION, "DAPD 任务工具 " + VERSION, (ROOT / "RELEASE-NOTES.md").read_text(encoding="utf-8"), paths, latest=True, direct=args.direct)
     else:
         package = args.package.resolve()
         if not 0 < package.stat().st_size <= MAX_CONTENT_BYTES:
@@ -145,7 +165,7 @@ def main():
         cache.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=cache) as directory:
             install_pack(directory, package, version)
-        publish("content-v" + version, "共享模板与素材 " + version, catalog["notes"], [package], latest=False)
+        publish("content-v" + version, "共享模板与素材 " + version, catalog["notes"], [package], latest=False, direct=args.direct)
 
 
 if __name__ == "__main__":
