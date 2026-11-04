@@ -2,6 +2,48 @@
   "schema": 1,
   "releases": [
     {
+      "tag_name": "v1.1.0",
+      "body": "# DAPD 任务工具 1.1.0\n\n- 增加“更新与共享”：自动检查公开 GitHub Releases，软件内下载、校验并重启升级。\n- 共享模板、固定描述、图片和附件可独立同步，无需升级整个程序。\n- 共享模板可直接创建任务，复制为个人模板后可自行编辑；同步不覆盖个人修改。\n- 增加共享内容包导出与发布工具，不内置任何默认模板。\n- 采用用户级安装包，程序与个人数据分别保存；创建任务期间禁止重启升级。\n",
+      "assets": [
+        {
+          "name": "build-info.json",
+          "size": 1747,
+          "digest": "sha256:7425c2a306bbb1f2048975fc65e7c5cba9fe07141e9d1bd6277bdad2cdfd586a",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/build-info.json"
+        },
+        {
+          "name": "DAPDTool.Desktop-1.1.0-full.nupkg",
+          "size": 51583449,
+          "digest": "sha256:7ae2f04b07ac84f9e293d984e9a01b91d8360263d7903966cecec305539e8116",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/DAPDTool.Desktop-1.1.0-full.nupkg"
+        },
+        {
+          "name": "DAPDTool.Desktop-win-Portable.zip",
+          "size": 51579073,
+          "digest": "sha256:6b714cc9093a8c64b289695fd444d27a3bdd1f052436203aa1ad135675b2ffdc",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/DAPDTool.Desktop-win-Portable.zip"
+        },
+        {
+          "name": "DAPDTool.Desktop-win-Setup.exe",
+          "size": 59114457,
+          "digest": "sha256:8cc02a9b7beacf2d80fb43ea203287f4c8724eb83990ac5dc46c37fcd1a6b4f5",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/DAPDTool.Desktop-win-Setup.exe"
+        },
+        {
+          "name": "releases.win.json",
+          "size": 1415,
+          "digest": "sha256:8b4aa4787b6b9e5d42bc1c97c6129f42f5f21f2b1a753f4983272218ba23a05c",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/releases.win.json"
+        },
+        {
+          "name": "SHA256.txt",
+          "size": 24493,
+          "digest": "sha256:ede4fd9e64d74419d7840464cf68d2e122eb489cab3978455fa34f2630b0f7e5",
+          "browser_download_url": "https://github.com/bootestRook/DAPDTool/releases/download/v1.1.0/SHA256.txt"
+        }
+      ]
+    },
+    {
       "tag_name": "content-v1.0.0",
       "body": "共享内容库初始化。当前不含预设模板，后续通过内容新版发布模板、描述、图片和附件。",
       "assets": [
